@@ -76,7 +76,10 @@ fn setup(
     domain.add_goal(
         GoalDefinition::new(GoalId(0), "neutralize target")
             .with_priority(20)
-            .with_desired_state([saddle_ai_goap::FactCondition::equals_bool(neutralized, true)]),
+            .with_desired_state([saddle_ai_goap::FactCondition::equals_bool(
+                neutralized,
+                true,
+            )]),
     );
     domain.add_action(
         ActionDefinition::new(ActionId(0), "use target", HookKey::new("use_target"))
@@ -92,7 +95,10 @@ fn setup(
             .iter(world)
             .next()
             .is_some();
-        SensorOutput::new([saddle_ai_goap::FactPatch::set_bool(has_target, has_any_target)])
+        SensorOutput::new([saddle_ai_goap::FactPatch::set_bool(
+            has_target,
+            has_any_target,
+        )])
     });
     hooks.register_target_provider("guard_targets", |world, _ctx| {
         let mut query = world.query_filtered::<(Entity, &Transform), With<GuardTarget>>();

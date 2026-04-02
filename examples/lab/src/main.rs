@@ -187,7 +187,10 @@ fn setup(
     ));
 }
 
-fn configure_guard_domain(hooks: &mut GoapHooks, library: &mut GoapLibrary) -> saddle_ai_goap::GoapDomainId {
+fn configure_guard_domain(
+    hooks: &mut GoapHooks,
+    library: &mut GoapLibrary,
+) -> saddle_ai_goap::GoapDomainId {
     let mut domain = saddle_ai_goap::GoapDomainDefinition::new("guard_replan");
     let has_target = domain.add_bool_key(
         "has_target",
@@ -212,7 +215,10 @@ fn configure_guard_domain(hooks: &mut GoapHooks, library: &mut GoapLibrary) -> s
     domain.add_goal(
         GoalDefinition::new(GoalId(0), "neutralize target")
             .with_priority(20)
-            .with_desired_state([saddle_ai_goap::FactCondition::equals_bool(neutralized, true)]),
+            .with_desired_state([saddle_ai_goap::FactCondition::equals_bool(
+                neutralized,
+                true,
+            )]),
     );
     domain.add_action(
         ActionDefinition::new(ActionId(0), "use target", "use_target")
@@ -227,7 +233,10 @@ fn configure_guard_domain(hooks: &mut GoapHooks, library: &mut GoapLibrary) -> s
             .iter(world)
             .next()
             .is_some();
-        SensorOutput::new([saddle_ai_goap::FactPatch::set_bool(has_target, has_any_target)])
+        SensorOutput::new([saddle_ai_goap::FactPatch::set_bool(
+            has_target,
+            has_any_target,
+        )])
     });
     hooks.register_target_provider("guard_targets", |world, _ctx| {
         let mut query = world.query_filtered::<(Entity, &Transform, &Name), With<GuardTarget>>();
@@ -245,7 +254,10 @@ fn configure_guard_domain(hooks: &mut GoapHooks, library: &mut GoapLibrary) -> s
     library.register(domain)
 }
 
-fn configure_worker_domain(hooks: &mut GoapHooks, library: &mut GoapLibrary) -> saddle_ai_goap::GoapDomainId {
+fn configure_worker_domain(
+    hooks: &mut GoapHooks,
+    library: &mut GoapLibrary,
+) -> saddle_ai_goap::GoapDomainId {
     let mut domain = saddle_ai_goap::GoapDomainDefinition::new("worker_cycle");
     let has_ore = domain.add_bool_key(
         "has_ore",

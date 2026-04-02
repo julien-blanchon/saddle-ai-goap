@@ -16,3 +16,4 @@ bevy = { version = "0.18", features = ["serialize"] }
 too_many_arguments = "allow"
 type_complexity = "allow"
 nonstandard_macro_braces = "warn"
+collapsible_if = "allow"
