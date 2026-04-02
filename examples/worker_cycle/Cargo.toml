@@ -1,0 +1,12 @@
+[package]
+name = "saddle-ai-goap-example-worker-cycle"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+bevy = { workspace = true }
+saddle-ai-goap = { workspace = true }
+
+[lints]
+workspace = true

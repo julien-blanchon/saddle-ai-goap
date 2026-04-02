@@ -1,0 +1,18 @@
+[package]
+name = "saddle-ai-goap"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Reusable GOAP runtime for Bevy"
+repository = "https://github.com/julien-blanchon/saddle-ai-goap"
+license = "MIT-0"
+
+[dependencies]
+bevy = { version = "0.18", features = ["serialize"] }
+
+[workspace]
+
+[lints.clippy]
+too_many_arguments = "allow"
+type_complexity = "allow"
+nonstandard_macro_braces = "warn"
