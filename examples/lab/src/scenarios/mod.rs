@@ -1,6 +1,6 @@
 mod support;
 
-use bevy_e2e::{action::Action, scenario::Scenario};
+use saddle_bevy_e2e::{action::Action, scenario::Scenario};
 
 use crate::GoapLabDiagnostics;
 

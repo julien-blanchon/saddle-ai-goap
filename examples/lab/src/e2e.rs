@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_e2e::action::Action;
+use saddle_bevy_e2e::action::Action;
 
 use crate::scenarios;
 
@@ -7,7 +7,7 @@ pub struct GoapLabE2EPlugin;
 
 impl Plugin for GoapLabE2EPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(bevy_e2e::E2EPlugin);
+        app.add_plugins(saddle_bevy_e2e::E2EPlugin);
 
         let args: Vec<String> = std::env::args().collect();
         let (scenario_name, handoff) = parse_e2e_args(&args);
@@ -17,7 +17,7 @@ impl Plugin for GoapLabE2EPlugin {
                 if handoff {
                     scenario.actions.push(Action::Handoff);
                 }
-                bevy_e2e::init_scenario(app, scenario);
+                saddle_bevy_e2e::init_scenario(app, scenario);
             } else {
                 error!(
                     "[goap_lab:e2e] Unknown scenario '{name}'. Available: {:?}",
