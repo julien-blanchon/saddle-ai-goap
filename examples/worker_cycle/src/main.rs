@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use saddle_ai_saddle_ai_goap::{
+use saddle_ai_goap::{
     ActionDefinition, ActionDispatched, ActionExecutionReport, ActionExecutionStatus, ActionId,
     GoalDefinition, GoalId, GoapAgent, GoapHooks, GoapLibrary, GoapPlugin, GoapSystems,
     SensorDefinition, SensorId, SensorInterval, SensorOutput,

@@ -4,11 +4,11 @@ mod e2e;
 mod scenarios;
 
 use bevy::prelude::*;
-#[cfg(feature = "dev")]
+#[cfg(all(feature = "dev", not(target_arch = "wasm32")))]
 use bevy::remote::{RemotePlugin, http::RemoteHttpPlugin};
-#[cfg(feature = "dev")]
+#[cfg(all(feature = "dev", not(target_arch = "wasm32")))]
 use bevy_brp_extras::BrpExtrasPlugin;
-use saddle_ai_saddle_ai_goap::{
+use saddle_ai_goap::{
     ActionDefinition, ActionDispatched, ActionExecutionReport, ActionExecutionStatus, ActionId,
     GoalDefinition, GoalId, GoapAgent, GoapDebugSnapshot, GoapHooks, GoapLibrary, GoapPlan,
     GoapPlannerScheduler, GoapPlugin, GoapRuntime, GoapSystems, PlanCompleted, PlanInvalidated,
@@ -101,9 +101,9 @@ fn main() {
         }),
         ..default()
     }));
-    #[cfg(feature = "dev")]
+    #[cfg(all(feature = "dev", not(target_arch = "wasm32")))]
     app.add_plugins(RemotePlugin::default());
-    #[cfg(feature = "dev")]
+    #[cfg(all(feature = "dev", not(target_arch = "wasm32")))]
     app.add_plugins(BrpExtrasPlugin::with_http_plugin(
         RemoteHttpPlugin::default(),
     ));
