@@ -90,9 +90,7 @@ fn test_action(
     }
 }
 
-fn plan_to_completion(
-    mut session: crate::PlanningSession,
-) -> crate::PlanningStepOutcome {
+fn plan_to_completion(mut session: crate::PlanningSession) -> crate::PlanningStepOutcome {
     loop {
         match session.step(64) {
             crate::PlanningStepOutcome::InProgress { .. } => continue,

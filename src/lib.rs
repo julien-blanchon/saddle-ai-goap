@@ -15,9 +15,8 @@ pub mod world_state;
 
 pub use assets::{GoapDomainAsset, GoapDomainAssetLoader, GoapDomainAssetLoaderError};
 pub use components::{
-    ActiveAction, ActiveActionStatus, CachedPlanEntry, GoapAgent, GoapAgentConfig,
-    GoapCounters, GoapPlan, GoapRuntime, PlanInvalidationReason, PlannerStatus,
-    SensorRuntimeInfo,
+    ActiveAction, ActiveActionStatus, CachedPlanEntry, GoapAgent, GoapAgentConfig, GoapCounters,
+    GoapPlan, GoapRuntime, PlanInvalidationReason, PlannerStatus, SensorRuntimeInfo,
 };
 pub use debug::{GoapDebugEntry, GoapDebugSnapshot};
 pub use definitions::{

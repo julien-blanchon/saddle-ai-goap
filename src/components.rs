@@ -2,8 +2,8 @@ use bevy::prelude::*;
 
 use crate::definitions::{ActionId, GoalId, GoapDomainId, SensorDefinition, SensorId};
 use crate::planner::{
-    GoapPlanDraft, GoapPlanStep, GoapPlannerLimits, PlanningSession, SelectedGoal, TargetCandidate,
-    PlanningProblem,
+    GoapPlanDraft, GoapPlanStep, GoapPlannerLimits, PlanningProblem, PlanningSession, SelectedGoal,
+    TargetCandidate,
 };
 use crate::world_state::{GoapWorldState, WorldKeyId};
 

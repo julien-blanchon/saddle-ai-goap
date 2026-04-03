@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use bevy::asset::{io::Reader, AssetLoader, LoadContext};
+use bevy::asset::{AssetLoader, LoadContext, io::Reader};
 use bevy::prelude::*;
 use bevy::reflect::TypePath;
 use serde::{Deserialize, Serialize};
