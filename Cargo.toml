@@ -9,6 +9,8 @@ license = "MIT-0"
 
 [dependencies]
 bevy = { version = "0.18", features = ["serialize"] }
+ron = "0.10"
+serde = { version = "1", features = ["derive"] }
 
 [workspace]
 

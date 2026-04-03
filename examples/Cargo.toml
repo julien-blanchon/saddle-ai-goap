@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "support",
     "basic",
     "guard_replan",
     "worker_cycle",
@@ -9,7 +10,11 @@ resolver = "3"
 
 [workspace.dependencies]
 bevy = { version = "0.18", features = ["serialize"] }
+bevy_flair = "0.7"
+bevy_input_focus = "0.18"
+bevy_ui_widgets = "0.18"
 saddle-ai-goap = { path = ".." }
+saddle-pane = { git = "https://github.com/julien-blanchon/saddle-pane" }
 
 [workspace.lints.clippy]
 too_many_arguments = "allow"

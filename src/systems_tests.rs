@@ -38,6 +38,7 @@ struct TestDeactivate;
 
 fn test_app() -> App {
     let mut app = App::new();
+    app.add_plugins((MinimalPlugins, AssetPlugin::default()));
     app.insert_resource(Time::<()>::default());
     app.init_schedule(TestUpdate);
     app.init_schedule(TestDeactivate);
@@ -57,6 +58,47 @@ fn drain_messages<T: Message>(app: &mut App) -> Vec<T> {
         .resource_mut::<Messages<T>>()
         .drain()
         .collect()
+}
+
+fn test_goal(name: &str) -> crate::SelectedGoal {
+    crate::SelectedGoal {
+        id: GoalId(99),
+        name: name.into(),
+        priority: 10,
+        score: 10.0,
+    }
+}
+
+fn test_action(
+    id: usize,
+    name: &str,
+    cost: u32,
+    preconditions: Vec<FactCondition>,
+    effects: Vec<FactEffect>,
+    sort_index: usize,
+) -> crate::PreparedActionVariant {
+    crate::PreparedActionVariant {
+        action_id: ActionId(id),
+        action_name: name.into(),
+        executor: crate::HookKey::new(name),
+        preconditions,
+        effects,
+        cost,
+        target_slot: None,
+        target: None,
+        sort_index,
+    }
+}
+
+fn plan_to_completion(
+    mut session: crate::PlanningSession,
+) -> crate::PlanningStepOutcome {
+    loop {
+        match session.step(64) {
+            crate::PlanningStepOutcome::InProgress { .. } => continue,
+            outcome => return outcome,
+        }
+    }
 }
 
 #[test]
@@ -205,6 +247,39 @@ fn action_success_feedback_completes_the_plan() {
         Some("done")
     );
     assert!(completion_clear.new_goal.is_none());
+}
+
+#[test]
+fn cached_plans_are_reused_for_identical_problems() {
+    let goal_key = crate::WorldKeyId(0);
+    let problem = crate::PlanningProblem {
+        initial_state: crate::GoapWorldState::default(),
+        state_revision: 7,
+        goal: test_goal("cache"),
+        desired_state: vec![crate::FactCondition::equals_bool(goal_key, true)],
+        actions: vec![test_action(
+            0,
+            "finish",
+            1,
+            vec![],
+            vec![crate::FactEffect::set_bool(goal_key, true)],
+            0,
+        )],
+        limits: GoapPlannerLimits::default(),
+    };
+
+    let draft = match plan_to_completion(crate::PlanningSession::new(problem.clone())) {
+        crate::PlanningStepOutcome::Success(plan) => plan,
+        other => panic!("expected successful cached plan, got {other:?}"),
+    };
+
+    let mut runtime = GoapRuntime::new(Default::default(), Vec::new(), Vec::new(), 0);
+    runtime.store_cached_plan(4, problem.clone(), draft.clone());
+
+    let cached = runtime.cached_plan(&problem).expect("expected cached plan");
+    assert_eq!(cached, draft);
+    assert_eq!(runtime.plan_cache.len(), 1);
+    assert_eq!(runtime.plan_cache[0].hit_count, 1);
 }
 
 #[test]

@@ -1,19 +1,20 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct WorldKeyId(pub usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub enum FactValueType {
     Bool,
     Int,
     Target,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct TargetToken(pub u64);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub enum FactValue {
     Bool(bool),
     Int(i32),
@@ -30,7 +31,7 @@ impl std::fmt::Display for FactValue {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Reflect, Serialize, Deserialize)]
 pub struct WorldKeyDefinition {
     pub id: WorldKeyId,
     pub name: String,
@@ -39,7 +40,7 @@ pub struct WorldKeyDefinition {
     pub default_value: Option<FactValue>,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Reflect)]
+#[derive(Debug, Clone, Default, PartialEq, Reflect, Serialize, Deserialize)]
 pub struct WorldStateSchema {
     pub keys: Vec<WorldKeyDefinition>,
 }
@@ -124,7 +125,7 @@ impl WorldStateSchema {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Reflect, Serialize, Deserialize)]
 pub struct GoapWorldState {
     pub values: Vec<Option<FactValue>>,
 }
@@ -209,7 +210,7 @@ impl GoapWorldState {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub enum FactComparison {
     Equals(FactValue),
     NotEquals(FactValue),
@@ -219,7 +220,7 @@ pub enum FactComparison {
     IsUnset,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct FactCondition {
     pub key: WorldKeyId,
     pub comparison: FactComparison,
@@ -291,7 +292,7 @@ impl FactCondition {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub enum FactEffect {
     Set(WorldKeyId, FactValue),
     AddInt(WorldKeyId, i32),
@@ -331,7 +332,7 @@ impl FactEffect {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct FactPatch {
     pub key: WorldKeyId,
     pub value: Option<FactValue>,

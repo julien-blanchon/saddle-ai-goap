@@ -1,23 +1,24 @@
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::planner::GoapPlannerLimits;
 use crate::world_state::{
     FactCondition, FactEffect, GoapWorldState, TargetToken, WorldKeyId, WorldStateSchema,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct GoapDomainId(pub usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct GoalId(pub usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct ActionId(pub usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct SensorId(pub usize);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct HookKey(pub String);
 
 impl HookKey {
@@ -42,13 +43,13 @@ impl From<String> for HookKey {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub enum SensorScope {
     Local,
     Global,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Reflect, Serialize, Deserialize)]
 pub struct SensorInterval {
     pub seconds: f32,
     pub phase_offset: f32,
@@ -74,7 +75,7 @@ impl Default for SensorInterval {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Reflect)]
+#[derive(Debug, Clone, PartialEq, Reflect, Serialize, Deserialize)]
 pub struct SensorDefinition {
     pub id: SensorId,
     pub name: String,
@@ -108,7 +109,7 @@ impl SensorDefinition {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Reflect)]
+#[derive(Debug, Clone, PartialEq, Reflect, Serialize, Deserialize)]
 pub struct GoalDefinition {
     pub id: GoalId,
     pub name: String,
@@ -161,7 +162,7 @@ impl GoalDefinition {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Reflect)]
+#[derive(Debug, Clone, PartialEq, Reflect, Serialize, Deserialize)]
 pub struct ActionTargetSpec {
     pub slot: String,
     pub provider: HookKey,
@@ -176,7 +177,7 @@ impl ActionTargetSpec {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Reflect)]
+#[derive(Debug, Clone, PartialEq, Reflect, Serialize, Deserialize)]
 pub struct ActionDefinition {
     pub id: ActionId,
     pub name: String,
@@ -238,7 +239,7 @@ impl ActionDefinition {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Reflect)]
+#[derive(Debug, Clone, PartialEq, Reflect, Serialize, Deserialize)]
 pub struct GoapDomainDefinition {
     pub name: String,
     pub schema: WorldStateSchema,

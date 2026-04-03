@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::definitions::{ActionId, GoalId, GoapDomainId, SensorDefinition, SensorId};
 use crate::planner::{
     GoapPlanDraft, GoapPlanStep, GoapPlannerLimits, PlanningSession, SelectedGoal, TargetCandidate,
+    PlanningProblem,
 };
 use crate::world_state::{GoapWorldState, WorldKeyId};
 
@@ -128,6 +129,7 @@ impl SensorRuntimeInfo {
 pub struct GoapCounters {
     pub sensor_refreshes: u64,
     pub replans: u64,
+    pub cached_plan_hits: u64,
     pub invalidations: u64,
     pub dispatched_actions: u64,
     pub completed_plans: u64,
@@ -135,6 +137,13 @@ pub struct GoapCounters {
     pub goal_switches: u64,
     pub total_expansions: u64,
     pub last_expansions: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Reflect)]
+pub struct CachedPlanEntry {
+    pub problem: PlanningProblem,
+    pub draft: GoapPlanDraft,
+    pub hit_count: u64,
 }
 
 #[derive(Component, Debug, Clone, PartialEq, Reflect)]
@@ -161,6 +170,7 @@ impl GoapAgent {
 #[derive(Debug, Clone, PartialEq, Reflect)]
 pub struct GoapAgentConfig {
     pub planner_limits: Option<GoapPlannerLimits>,
+    pub plan_cache_capacity: usize,
     pub preempt_on_better_goal: bool,
     pub goal_switch_margin: f32,
     pub replan_on_sensed_state_change: bool,
@@ -169,6 +179,11 @@ pub struct GoapAgentConfig {
 impl GoapAgentConfig {
     pub fn with_planner_limits(mut self, limits: GoapPlannerLimits) -> Self {
         self.planner_limits = Some(limits);
+        self
+    }
+
+    pub fn with_plan_cache_capacity(mut self, plan_cache_capacity: usize) -> Self {
+        self.plan_cache_capacity = plan_cache_capacity;
         self
     }
 
@@ -181,6 +196,7 @@ impl Default for GoapAgentConfig {
     fn default() -> Self {
         Self {
             planner_limits: None,
+            plan_cache_capacity: 8,
             preempt_on_better_goal: true,
             goal_switch_margin: 0.25,
             replan_on_sensed_state_change: true,
@@ -206,6 +222,7 @@ pub struct GoapRuntime {
     pub sensor_revision: u64,
     pub observed_global_revision: u64,
     pub next_action_ticket: u64,
+    pub plan_cache: Vec<CachedPlanEntry>,
     #[reflect(ignore)]
     pub planning_session: Option<PlanningSession>,
 }
@@ -233,7 +250,50 @@ impl GoapRuntime {
             sensor_revision: 0,
             observed_global_revision,
             next_action_ticket: 1,
+            plan_cache: Vec::new(),
             planning_session: None,
         }
+    }
+
+    pub fn cached_plan(&mut self, problem: &PlanningProblem) -> Option<GoapPlanDraft> {
+        let index = self
+            .plan_cache
+            .iter()
+            .position(|entry| entry.problem == *problem)?;
+        let mut entry = self.plan_cache.remove(index);
+        entry.hit_count = entry.hit_count.saturating_add(1);
+        let draft = entry.draft.clone();
+        self.plan_cache.insert(0, entry);
+        Some(draft)
+    }
+
+    pub fn store_cached_plan(
+        &mut self,
+        capacity: usize,
+        problem: PlanningProblem,
+        draft: GoapPlanDraft,
+    ) {
+        if capacity == 0 {
+            self.plan_cache.clear();
+            return;
+        }
+
+        if let Some(index) = self
+            .plan_cache
+            .iter()
+            .position(|entry| entry.problem == problem)
+        {
+            self.plan_cache.remove(index);
+        }
+
+        self.plan_cache.insert(
+            0,
+            CachedPlanEntry {
+                problem,
+                draft,
+                hit_count: 0,
+            },
+        );
+        self.plan_cache.truncate(capacity);
     }
 }

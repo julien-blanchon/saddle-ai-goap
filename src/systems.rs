@@ -255,6 +255,17 @@ pub(crate) fn advance_planning(world: &mut World) {
                 }
                 continue;
             };
+            let cached_plan = world
+                .get_mut::<GoapRuntime>(entity)
+                .and_then(|mut runtime| runtime.cached_plan(&problem));
+            if let Some(draft) = cached_plan {
+                if let Some(mut runtime) = world.get_mut::<GoapRuntime>(entity) {
+                    runtime.status = PlannerStatus::Dispatching;
+                    runtime.counters.cached_plan_hits += 1;
+                }
+                apply_successful_plan(world, entity, draft);
+                continue;
+            }
             if let Some(mut runtime) = world.get_mut::<GoapRuntime>(entity) {
                 runtime.status = PlannerStatus::Planning;
                 runtime.planning_session = Some(PlanningSession::new(problem));
@@ -283,6 +294,14 @@ pub(crate) fn advance_planning(world: &mut World) {
                 }
             }
             PlanningStepOutcome::Success(draft) => {
+                let session_problem = session.problem().clone();
+                if let Some(mut runtime) = world.get_mut::<GoapRuntime>(entity) {
+                    runtime.store_cached_plan(
+                        agent.config.plan_cache_capacity,
+                        session_problem,
+                        draft.clone(),
+                    );
+                }
                 apply_successful_plan(world, entity, draft);
             }
             PlanningStepOutcome::Failure {

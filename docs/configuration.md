@@ -44,6 +44,12 @@ Prefer the builder:
 GoapAgentConfig::default().with_planner_limits(custom_limits)
 ```
 
+### `plan_cache_capacity: usize`
+
+Default: `8`
+
+Maximum number of exact-problem plan drafts retained on the agent. Set to `0` to disable plan reuse entirely.
+
 ### `preempt_on_better_goal: bool`
 
 Default: `true`
@@ -132,6 +138,15 @@ Number of agents whose planning work may advance in one frame. Lower it when you
 ### `queue_depth: usize`
 
 Read-only runtime metric that mirrors the current queue length. The queue itself is internal; `queue_depth` exists so BRP, overlays, and diagnostics can inspect pressure without exposing queue internals.
+
+## Asset Loading
+
+`GoapDomainAssetLoader` registers the `.goap.ron` extension.
+
+| Type | Effect |
+| --- | --- |
+| `GoapDomainAsset::definition` | Serializable GOAP domain payload |
+| `GoapDomainAsset::register(...)` | Inserts the loaded domain into `GoapLibrary` and returns its `GoapDomainId` |
 
 ## Goal Definitions
 

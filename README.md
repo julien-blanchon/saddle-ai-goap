@@ -91,8 +91,12 @@ fn finish_actions(
   `PlanningSession` supports incremental A* search, and `GoapPlannerScheduler` limits how many agents advance their planning work per frame.
 - Layered planner budgets:
   `GoapDomainDefinition::with_default_limits(...)` sets domain-wide defaults, while `GoapAgentConfig::with_planner_limits(...)` lets specific agents override them.
+- Exact-problem plan caching:
+  `GoapAgentConfig::plan_cache_capacity` keeps recently successful plans reusable when the symbolic problem repeats.
 - Failed-plan retry gating:
   when a goal fails at a specific sensor revision, the runtime will not spam identical replans every frame; it waits for a goal change, invalidation, or newer sensed state before retrying.
+
+Domains can also be loaded from RON assets through `GoapDomainAsset` and `GoapDomainAssetLoader`.
 
 ## Replanning Policy
 
@@ -138,6 +142,8 @@ cargo run -p saddle-ai-goap-lab --features e2e -- goap_smoke
 cargo run -p saddle-ai-goap-lab --features e2e -- goap_replan
 cargo run -p saddle-ai-goap-lab --features e2e -- goap_worker_cycle
 ```
+
+The lab and support examples now expose live tuning through `saddle-pane`.
 
 ## BRP
 

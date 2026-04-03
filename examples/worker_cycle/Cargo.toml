@@ -7,6 +7,7 @@ publish = false
 [dependencies]
 bevy = { workspace = true }
 saddle-ai-goap = { workspace = true }
+saddle-ai-goap-example-support = { path = "../support" }
 
 [lints]
 workspace = true

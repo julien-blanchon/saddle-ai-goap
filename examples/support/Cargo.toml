@@ -1,0 +1,16 @@
+[package]
+name = "saddle-ai-goap-example-support"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+bevy = { workspace = true }
+bevy_flair = { workspace = true }
+bevy_input_focus = { workspace = true }
+bevy_ui_widgets = { workspace = true }
+saddle-ai-goap = { workspace = true }
+saddle-pane = { workspace = true }
+
+[lints]
+workspace = true

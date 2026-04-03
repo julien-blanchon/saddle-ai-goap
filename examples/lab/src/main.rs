@@ -8,6 +8,7 @@ use bevy::prelude::*;
 use bevy::remote::{RemotePlugin, http::RemoteHttpPlugin};
 #[cfg(all(feature = "dev", not(target_arch = "wasm32")))]
 use bevy_brp_extras::BrpExtrasPlugin;
+use saddle_pane::prelude::*;
 use saddle_ai_goap::{
     ActionDefinition, ActionDispatched, ActionExecutionReport, ActionExecutionStatus, ActionId,
     GoalDefinition, GoalId, GoapAgent, GoapDebugSnapshot, GoapHooks, GoapLibrary, GoapPlan,
@@ -86,6 +87,34 @@ struct WorkerActionState {
     restore_workbench_at: Option<f32>,
 }
 
+#[derive(Resource, Clone, Pane)]
+#[pane(title = "GOAP Lab")]
+struct GoapLabPane {
+    #[pane(slider, min = 0.1, max = 2.5, step = 0.05)]
+    time_scale: f32,
+    #[pane(slider, min = 1.0, max = 64.0, step = 1.0)]
+    max_agents_per_frame: usize,
+    #[pane(slider, min = 0.0, max = 16.0, step = 1.0)]
+    plan_cache_capacity: usize,
+    #[pane(slider, min = 0.0, max = 1.0, step = 0.05)]
+    goal_switch_margin: f32,
+    replan_on_sensed_state_change: bool,
+    workbench_available: bool,
+}
+
+impl Default for GoapLabPane {
+    fn default() -> Self {
+        Self {
+            time_scale: 1.0,
+            max_agents_per_frame: 8,
+            plan_cache_capacity: 8,
+            goal_switch_margin: 0.25,
+            replan_on_sensed_state_change: true,
+            workbench_available: true,
+        }
+    }
+}
+
 fn main() {
     let mut app = App::new();
     app.insert_resource(ClearColor(Color::srgb(0.045, 0.055, 0.07)));
@@ -93,6 +122,7 @@ fn main() {
     app.insert_resource(GoapLabDiagnostics::default());
     app.insert_resource(GuardActionState::default());
     app.insert_resource(WorkerActionState::default());
+    app.insert_resource(GoapLabPane::default());
     app.add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
             title: "goap crate-local lab".into(),
@@ -101,6 +131,14 @@ fn main() {
         }),
         ..default()
     }));
+    app.add_plugins((
+        bevy_flair::FlairPlugin,
+        bevy_input_focus::InputDispatchPlugin,
+        bevy_ui_widgets::UiWidgetsPlugins,
+        bevy_input_focus::tab_navigation::TabNavigationPlugin,
+        saddle_pane::PanePlugin,
+    ));
+    app.register_pane::<GoapLabPane>();
     #[cfg(all(feature = "dev", not(target_arch = "wasm32")))]
     app.add_plugins(RemotePlugin::default());
     #[cfg(all(feature = "dev", not(target_arch = "wasm32")))]
@@ -114,6 +152,7 @@ fn main() {
     app.add_systems(
         Update,
         (
+            sync_pane_to_runtime,
             remember_guard_dispatch
                 .after(GoapSystems::Dispatch)
                 .before(GoapSystems::Monitor),
@@ -132,6 +171,28 @@ fn main() {
         ),
     );
     app.run();
+}
+
+fn sync_pane_to_runtime(
+    pane: Res<GoapLabPane>,
+    mut virtual_time: ResMut<Time<Virtual>>,
+    mut scheduler: ResMut<GoapPlannerScheduler>,
+    mut workbench: ResMut<WorkbenchAvailability>,
+    mut agents: Query<&mut GoapAgent>,
+) {
+    if !pane.is_changed() {
+        return;
+    }
+
+    virtual_time.set_relative_speed(pane.time_scale.max(0.1));
+    scheduler.max_agents_per_frame = pane.max_agents_per_frame.max(1);
+    workbench.0 = pane.workbench_available;
+
+    for mut agent in &mut agents {
+        agent.config.plan_cache_capacity = pane.plan_cache_capacity;
+        agent.config.goal_switch_margin = pane.goal_switch_margin.max(0.0);
+        agent.config.replan_on_sensed_state_change = pane.replan_on_sensed_state_change;
+    }
 }
 
 fn setup(

@@ -1,3 +1,5 @@
+use saddle_ai_goap_example_support as support;
+
 use bevy::prelude::*;
 use saddle_ai_goap::{
     ActionDefinition, ActionDispatched, ActionExecutionReport, ActionExecutionStatus, ActionId,
@@ -22,16 +24,9 @@ struct GuardActionState {
 }
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "goap guard_replan".into(),
-                resolution: (1100, 640).into(),
-                ..default()
-            }),
-            ..default()
-        }))
-        .insert_resource(GuardActionState::default())
+    let mut app = App::new();
+    support::configure_2d_example(&mut app, "goap guard replan", 7.0);
+    app.insert_resource(GuardActionState::default())
         .add_plugins(GoapPlugin::always_on(Update))
         .add_systems(Startup, setup)
         .add_systems(
@@ -42,8 +37,8 @@ fn main() {
                     .before(GoapSystems::Monitor),
                 tick_guard_action.after(remember_dispatch),
             ),
-        )
-        .run();
+        );
+    app.run();
 }
 
 fn setup(
@@ -53,8 +48,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn((Name::new("Camera"), Camera2d));
-
     let mut domain = saddle_ai_goap::GoapDomainDefinition::new("guard_replan");
     let has_target =
         domain.add_bool_key("has_target", Some("live targets exist".into()), Some(false));

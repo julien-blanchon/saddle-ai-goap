@@ -70,6 +70,8 @@ Per agent:
 - `GoapDebugSnapshot`
   BRP-friendly current goal, plan chain, targets, invalidation reason, and counter summary
 
+Asset-authored domains load through `GoapDomainAssetLoader`, then register into `GoapLibrary` exactly like code-built domains. The planner therefore sees one normalized source of truth after load time.
+
 ## Runtime Pipeline
 
 The public runtime phases are:

@@ -1,3 +1,5 @@
+use saddle_ai_goap_example_support as support;
+
 use bevy::prelude::*;
 use saddle_ai_goap::{
     ActionDefinition, ActionDispatched, ActionExecutionReport, ActionExecutionStatus, ActionId,
@@ -19,16 +21,9 @@ struct WorkerAgent;
 struct WorkbenchAvailability(bool);
 
 fn main() {
-    App::new()
-        .insert_resource(WorkbenchAvailability(true))
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "goap worker_cycle".into(),
-                resolution: (1100, 640).into(),
-                ..default()
-            }),
-            ..default()
-        }))
+    let mut app = App::new();
+    support::configure_2d_example(&mut app, "goap worker cycle", 7.0);
+    app.insert_resource(WorkbenchAvailability(true))
         .add_plugins(GoapPlugin::always_on(Update))
         .add_systems(Startup, setup)
         .add_systems(
@@ -36,8 +31,8 @@ fn main() {
             execute_worker_actions
                 .after(GoapSystems::Dispatch)
                 .before(GoapSystems::Monitor),
-        )
-        .run();
+        );
+    app.run();
 }
 
 fn setup(
@@ -47,8 +42,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn((Name::new("Camera"), Camera2d));
-
     let mut domain = saddle_ai_goap::GoapDomainDefinition::new("worker_cycle");
     let has_ore = domain.add_bool_key("has_ore", Some("worker carries ore".into()), Some(false));
     let has_ingot = domain.add_bool_key(

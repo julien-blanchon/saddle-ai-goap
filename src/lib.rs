@@ -2,6 +2,7 @@ use bevy::ecs::intern::Interned;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::*;
 
+pub mod assets;
 pub mod components;
 pub mod debug;
 pub mod definitions;
@@ -12,9 +13,11 @@ pub mod resources;
 pub mod systems;
 pub mod world_state;
 
+pub use assets::{GoapDomainAsset, GoapDomainAssetLoader, GoapDomainAssetLoaderError};
 pub use components::{
-    ActiveAction, ActiveActionStatus, GoapAgent, GoapAgentConfig, GoapCounters, GoapPlan,
-    GoapRuntime, PlanInvalidationReason, PlannerStatus, SensorRuntimeInfo,
+    ActiveAction, ActiveActionStatus, CachedPlanEntry, GoapAgent, GoapAgentConfig,
+    GoapCounters, GoapPlan, GoapRuntime, PlanInvalidationReason, PlannerStatus,
+    SensorRuntimeInfo,
 };
 pub use debug::{GoapDebugEntry, GoapDebugSnapshot};
 pub use definitions::{
@@ -93,6 +96,8 @@ impl Plugin for GoapPlugin {
             .init_resource::<GoapPlannerScheduler>()
             .init_resource::<GoapGlobalSensorCache>()
             .init_resource::<resources::GoapMessageCursors>()
+            .init_asset::<GoapDomainAsset>()
+            .register_asset_loader(GoapDomainAssetLoader)
             .add_message::<ActionExecutionReport>()
             .add_message::<InvalidateGoapAgent>()
             .add_message::<InvalidateLocalSensors>()
@@ -113,6 +118,7 @@ impl Plugin for GoapPlugin {
             .register_type::<ActionExecutionStatus>()
             .register_type::<ActionId>()
             .register_type::<ActionTargetSpec>()
+            .register_type::<GoapDomainAsset>()
             .register_type::<DomainGlobalCache>()
             .register_type::<FactComparison>()
             .register_type::<FactCondition>()
@@ -128,6 +134,7 @@ impl Plugin for GoapPlugin {
             .register_type::<GoapAgent>()
             .register_type::<GoapAgentConfig>()
             .register_type::<GoapCounters>()
+            .register_type::<CachedPlanEntry>()
             .register_type::<GoapDebugEntry>()
             .register_type::<GoapDebugSnapshot>()
             .register_type::<GoapDomainDefinition>()

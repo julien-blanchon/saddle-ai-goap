@@ -2,11 +2,12 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::definitions::{ActionId, GoalId, HookKey};
 use crate::world_state::{FactCondition, FactEffect, GoapWorldState, TargetToken};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, Serialize, Deserialize)]
 pub struct GoapPlannerLimits {
     pub max_node_expansions: u32,
     pub max_plan_length: usize,
@@ -208,6 +209,10 @@ impl PlanningSession {
 
     pub fn source_revision(&self) -> u64 {
         self.problem.state_revision
+    }
+
+    pub fn problem(&self) -> &PlanningProblem {
+        &self.problem
     }
 
     pub fn step(&mut self, budget: u32) -> PlanningStepOutcome {

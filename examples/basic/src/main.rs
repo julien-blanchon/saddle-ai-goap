@@ -1,3 +1,5 @@
+use saddle_ai_goap_example_support as support;
+
 use bevy::prelude::*;
 use saddle_ai_goap::{
     ActionDefinition, ActionDispatched, ActionExecutionReport, ActionExecutionStatus, ActionId,
@@ -8,16 +10,9 @@ use saddle_ai_goap::{
 struct BasicAgent;
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "goap basic".into(),
-                resolution: (900, 540).into(),
-                ..default()
-            }),
-            ..default()
-        }))
-        .add_plugins(GoapPlugin::always_on(Update))
+    let mut app = App::new();
+    support::configure_2d_example(&mut app, "goap basic", 6.0);
+    app.add_plugins(GoapPlugin::always_on(Update))
         .add_systems(Startup, setup)
         .add_systems(
             Update,
@@ -27,8 +22,8 @@ fn main() {
                     .before(GoapSystems::Monitor),
                 tint_completed.after(GoapSystems::Monitor),
             ),
-        )
-        .run();
+        );
+    app.run();
 }
 
 fn setup(
@@ -37,8 +32,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn((Name::new("Camera"), Camera2d));
-
     let mut domain = saddle_ai_goap::GoapDomainDefinition::new("basic_demo");
     let done = domain.add_bool_key(
         "done",
