@@ -192,7 +192,7 @@ impl From<GoapWorldStateRaw> for GoapWorldState {
 #[serde(into = "GoapWorldStateSerdeOut")]
 #[reflect(PartialEq, Hash)]
 pub struct GoapWorldState {
-    pub values: Vec<Option<FactValue>>,
+    values: Vec<Option<FactValue>>,
     #[serde(skip)]
     #[reflect(ignore)]
     cached_hash: u64,
@@ -240,6 +240,10 @@ impl Hash for GoapWorldState {
 }
 
 impl GoapWorldState {
+    pub fn values(&self) -> &[Option<FactValue>] {
+        &self.values
+    }
+
     pub fn with_capacity(keys: usize) -> Self {
         let values = vec![None; keys];
         let cached_hash = compute_full_hash(&values);

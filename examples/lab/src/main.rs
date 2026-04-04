@@ -772,7 +772,7 @@ fn update_overlay(
 }
 
 fn goal_name(goal: Option<&SelectedGoal>) -> &str {
-    goal.map(|goal| goal.name.as_str()).unwrap_or("none")
+    goal.map(|goal| &*goal.name).unwrap_or("none")
 }
 
 fn format_plan(snapshot: &GoapDebugSnapshot, plan: Option<&GoapPlan>) -> String {
