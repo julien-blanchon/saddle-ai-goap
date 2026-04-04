@@ -11,8 +11,10 @@ At minimum, every live agent exposes:
 - plan chain
 - active target bindings
 - last invalidation reason
+- deferred invalidation (if set, explains why a replan is pending behind a non-interruptible action)
 - sensed symbolic state
 - runtime counters
+- reserved targets
 
 These are available through `GoapDebugSnapshot` and the full `GoapRuntime` component.
 
@@ -40,6 +42,7 @@ Useful BRP targets:
 - `saddle_ai_goap::debug::GoapDebugSnapshot`
 - `saddle_ai_goap::resources::GoapPlannerScheduler`
 - `saddle_ai_goap::resources::GoapGlobalSensorCache`
+- `saddle_ai_goap::reservations::GoapReservationMap`
 
 The debug snapshot is the fastest way to answer "what is this agent trying to do right now?" The full runtime component is better when you need sensor timing, counters, or the active action ticket.
 
@@ -93,6 +96,8 @@ Questions these commands answer quickly:
 - Which action is currently dispatched?
 - Which sensor cache revision is live?
 - Is the planner queue backing up?
+- Which targets are reserved and by whom?
+- Is a soft invalidation deferred behind a non-interruptible action?
 
 ## Reading The Snapshot
 
@@ -156,3 +161,21 @@ Check:
 - `GoapGlobalSensorCache` revisions
 - per-sensor `next_due_seconds` and `last_run_seconds`
 - whether the game should send `InvalidateLocalSensors` or `InvalidateGlobalSensors`
+
+### Action never completes / replan keeps deferring
+
+Check:
+
+- `ActiveAction.interruptible` is `false` and holding completion
+- `GoapRuntime.deferred_invalidation` is set (indicates a pending soft invalidation)
+- whether the action executor has legitimately not reported `Success` or `Failure` yet
+- sensor intervals — frequent refreshes on non-interruptible actions queue deferred invalidations that pile up
+
+### Two agents target the same entity
+
+Check:
+
+- whether the domain has a `reservation_policy` set
+- `GoapReservationMap` for current reservations per domain
+- whether `cost_penalty` is high enough to dissuade competing agents
+- whether `hard_block` should be enabled instead

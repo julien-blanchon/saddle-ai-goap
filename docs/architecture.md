@@ -60,13 +60,15 @@ Shared:
   domain-scoped symbolic cache for expensive shared sensor work
 - `GoapPlannerScheduler`
   fairness queue and per-frame planner budget
+- `GoapReservationMap`
+  per-domain target reservation tracking; opt-in via `ReservationPolicy`
 
 Per agent:
 
 - `GoapAgent`
   domain binding and per-agent config
 - `GoapRuntime`
-  sensed state, active goal, plan cursor, active action, counters, sensor timing, failed-plan retry bookkeeping, and optional incremental planning session
+  sensed state, active goal, plan cursor, active action, counters, sensor timing, failed-plan retry bookkeeping, deferred invalidation intent, reserved target tokens, and optional incremental planning session
 - `GoapDebugSnapshot`
   BRP-friendly current goal, plan chain, targets, invalidation reason, and counter summary
 
@@ -112,11 +114,13 @@ Sense -> SelectGoal -> Plan -> Dispatch -> Monitor -> Cleanup -> Debug
 
 - consume `ActionExecutionReport`
 - invalidate plans on failed preconditions, target loss, explicit invalidations, or sensor-refresh policy
+- for non-interruptible actions (`interruptible: false`), defer soft invalidations (`HigherPriorityGoal`, `SensorRefresh`) until the action completes; process deferred invalidation on `Success`
 - complete goals when their desired conditions or completion hook says they are done
 
 ### `GoapSystems::Cleanup`
 
 - remove runtime state from entities that lost `GoapAgent`
+- reap expired target reservations based on `ReservationPolicy::ttl_seconds`
 
 ### `GoapSystems::Debug`
 
@@ -143,3 +147,26 @@ Sensors are first-class because the planner should reason over curated memory, n
 - sensor refreshes increment a revision counter
 
 That revision counter is what makes deliberate stale-plan invalidation possible. The planner can explain that a replan happened because symbolic memory changed, not because some hidden gameplay system silently discarded the plan.
+
+## Heuristic and State Hashing
+
+The planner uses an `h_max` heuristic: for each unsatisfied goal condition, it looks up the minimum cost among actions whose effects can satisfy it (precomputed in `ActionRelevanceMap`), then returns the maximum of those per-condition costs. This is admissible and much tighter than a simple unsatisfied-condition count when action costs vary.
+
+`GoapWorldState` maintains an incrementally-updated Zobrist hash. Each mutation XORs out the old slot hash and XORs in the new one. `Hash` uses the cached `u64` directly (O(1)), and `PartialEq` fast-rejects on hash mismatch before falling through to element-wise comparison. This eliminates the O(n) per-lookup cost in the planner's `best_costs` HashMap.
+
+## Action Interruptibility
+
+Actions can be marked `interruptible: false` on their `ActionDefinition`. When a running non-interruptible action receives a soft invalidation (`HigherPriorityGoal` or `SensorRefresh`), the invalidation is stored in `GoapRuntime.deferred_invalidation` rather than cancelling the action immediately. Hard invalidations (`TargetInvalidated`, `RequiredFactChanged`, `ActionFailed`, `Manual`, `GoalNoLongerValid`) always interrupt regardless.
+
+The deferred invalidation fires when the action completes with `Success`. If the action fails, the failure takes priority and the deferred invalidation is discarded.
+
+## Target Reservations
+
+When `GoapDomainDefinition.reservation_policy` is set, the planner participates in target coordination:
+
+1. During `build_planning_problem`, reserved targets owned by other agents receive a cost penalty (or are excluded with `hard_block: true`)
+2. On plan acceptance (`apply_successful_plan`), all targeted steps reserve their tokens in `GoapReservationMap`
+3. On plan invalidation, goal completion, or agent deactivation, reservations are released
+4. Stale reservations are reaped during `GoapSystems::Cleanup` based on `ttl_seconds`
+
+Because the planner scheduler processes agents sequentially, the second agent to plan always sees the first agent's reservations.

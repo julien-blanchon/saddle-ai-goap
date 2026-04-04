@@ -188,6 +188,21 @@ Optional hook used to reject an action variant, including target-bound variants,
 
 Optional target slot plus provider key. When present, the planner asks game code for candidate targets and expands one symbolic action variant per target.
 
+### `interruptible: bool`
+
+Default: `true`
+
+Controls whether soft invalidations are deferred when this action is running:
+
+- `true`
+  plan is immediately invalidated on `HigherPriorityGoal` or `SensorRefresh`
+- `false`
+  soft invalidations are stored in `GoapRuntime.deferred_invalidation` and processed when the action completes with `Success`
+
+Hard invalidations (`TargetInvalidated`, `RequiredFactChanged`, `ActionFailed`, `Manual`, `GoalNoLongerValid`) always interrupt immediately regardless of this setting.
+
+Use `false` for actions with side effects that must complete (animations, network calls, state mutations that cannot be rolled back).
+
 ## Debug Surface
 
 ### `GoapDebugSnapshot`
@@ -200,4 +215,38 @@ Reflect-enabled resource holding domain-scoped symbolic caches and global sensor
 
 ### `GoapRuntime`
 
-Reflect-enabled component exposing the full runtime state, including local and global sensor timing, active action ticket, counters, and last invalidation reason.
+Reflect-enabled component exposing the full runtime state, including local and global sensor timing, active action ticket, counters, last invalidation reason, deferred invalidation, and reserved target tokens.
+
+### `GoapReservationMap`
+
+Resource tracking per-domain target reservations. Inspect via BRP to see which targets are claimed by which agents.
+
+## Reservation Policy
+
+Opt-in per-domain target coordination. Enable via:
+
+```rust
+domain.with_reservation_policy(ReservationPolicy {
+    cost_penalty: 100,
+    hard_block: false,
+    ttl_seconds: Some(10.0),
+})
+```
+
+### `cost_penalty: u32`
+
+Default: `100`
+
+Extra cost added to target candidates reserved by another agent. Higher values make the planner strongly prefer unreserved targets.
+
+### `hard_block: bool`
+
+Default: `false`
+
+If `true`, reserved targets are excluded from planning entirely instead of being penalized.
+
+### `ttl_seconds: Option<f32>`
+
+Default: `Some(10.0)`
+
+Reservation lifetime in seconds. Expired reservations are reaped during `GoapSystems::Cleanup`. `None` means reservations persist until explicitly released (plan invalidation, goal completion, or agent deactivation).

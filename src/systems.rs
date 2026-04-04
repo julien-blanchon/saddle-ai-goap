@@ -1,10 +1,11 @@
 use std::collections::HashSet;
+use std::sync::Arc;
 
 use bevy::prelude::*;
 
 use crate::components::{
-    ActiveAction, ActiveActionStatus, GoapAgent, GoapPlan, GoapRuntime, PlanInvalidationReason,
-    PlannerStatus, SensorRuntimeInfo,
+    ActiveAction, ActiveActionStatus, DeferredInvalidation, GoapAgent, GoapPlan, GoapRuntime,
+    PlanInvalidationReason, PlannerStatus, SensorRuntimeInfo,
 };
 use crate::debug::{GoapDebugEntry, GoapDebugSnapshot};
 use crate::definitions::{ActionDefinition, GoalDefinition, GoapDomainDefinition, GoapDomainId};
@@ -21,6 +22,7 @@ use crate::planner::{
     GoapPlanDraft, PlanningFailureReason, PlanningProblem, PlanningSession, PlanningStepOutcome,
     PreparedActionVariant, SelectedGoal, TargetCandidate,
 };
+use crate::reservations::{GoapReservationMap, ReservationEntry};
 use crate::resources::{
     GoapGlobalSensorCache, GoapHooks, GoapLibrary, GoapMessageCursors, GoapPlannerScheduler,
 };
@@ -36,6 +38,7 @@ pub(crate) fn deactivate_agents(world: &mut World) {
         .iter(world)
         .collect::<Vec<_>>();
     for entity in entities {
+        release_agent_reservations(world, entity);
         world.resource_mut::<GoapPlannerScheduler>().remove(entity);
         if let Ok(mut entity_mut) = world.get_entity_mut(entity) {
             entity_mut.remove::<GoapRuntime>();
@@ -163,12 +166,15 @@ pub(crate) fn select_goals(world: &mut World) {
 
         if should_switch {
             if current_goal.is_some() {
-                invalidate_plan(
+                let applied = invalidate_plan(
                     world,
                     entity,
                     PlanInvalidationReason::HigherPriorityGoal,
                     false,
                 );
+                if !applied {
+                    continue; // deferred — non-interruptible action running
+                }
             }
             set_goal(world, entity, Some(best_goal.clone()));
             request_plan(world, entity);
@@ -471,6 +477,17 @@ pub(crate) fn cleanup_agents(world: &mut World) {
             entity_mut.remove::<GoapDebugSnapshot>();
         }
     }
+
+    // TTL reaping for reservations
+    let now = time_seconds(world);
+    let library = world.resource::<GoapLibrary>().clone();
+    for (index, domain) in library.domains.iter().enumerate() {
+        if let Some(ref policy) = domain.reservation_policy {
+            world
+                .resource_mut::<GoapReservationMap>()
+                .cleanup_stale(GoapDomainId(index), policy, now);
+        }
+    }
 }
 
 pub(crate) fn refresh_debug_snapshots(world: &mut World) {
@@ -568,7 +585,7 @@ pub(crate) fn refresh_debug_snapshots(world: &mut World) {
         ];
 
         if let Some(mut snapshot) = world.get_mut::<GoapDebugSnapshot>(entity) {
-            snapshot.current_goal = goal.as_ref().map(|goal| goal.name.clone());
+            snapshot.current_goal = goal.as_ref().map(|goal| goal.name.to_string());
             snapshot.planner_status = format!("{status:?}");
             snapshot.plan_chain = plan_chain;
             snapshot.active_targets = active_targets;
@@ -812,7 +829,7 @@ fn evaluate_best_goal(
         let score = goal_score(world, entity, domain_id, definition, state, current_goal);
         let candidate = SelectedGoal {
             id: definition.id,
-            name: definition.name.clone(),
+            name: Arc::from(definition.name.as_str()),
             priority: definition.priority,
             score,
         };
@@ -992,6 +1009,20 @@ fn build_planning_problem(
                 .unwrap_or_default();
 
             for (candidate_index, target) in targets.into_iter().enumerate() {
+                // Reservation check: skip or penalize reserved targets
+                let mut reservation_penalty = 0u32;
+                if let Some(ref policy) = domain.reservation_policy {
+                    let reserved = world
+                        .resource::<GoapReservationMap>()
+                        .is_reserved_by_other(agent.domain, &target.token, entity);
+                    if reserved {
+                        if policy.hard_block {
+                            continue;
+                        }
+                        reservation_penalty = policy.cost_penalty;
+                    }
+                }
+
                 if !action_context_valid(
                     world,
                     entity,
@@ -1005,7 +1036,7 @@ fn build_planning_problem(
                 }
                 actions.push(PreparedActionVariant {
                     action_id: action.id,
-                    action_name: action.name.clone(),
+                    action_name: Arc::from(action.name.as_str()),
                     executor: action.executor.clone(),
                     preconditions: action.preconditions.clone(),
                     effects: action.effects.clone(),
@@ -1017,16 +1048,18 @@ fn build_planning_problem(
                         &goal,
                         action,
                         Some(target.clone()),
-                    ),
+                    )
+                    .saturating_add(reservation_penalty),
                     target_slot: Some(target_spec.slot.clone()),
                     target: Some(target),
                     sort_index: action.id.0 * 1000 + candidate_index,
+                    interruptible: action.interruptible,
                 });
             }
         } else if action_context_valid(world, entity, agent.domain, &state, &goal, action, None) {
             actions.push(PreparedActionVariant {
                 action_id: action.id,
-                action_name: action.name.clone(),
+                action_name: Arc::from(action.name.as_str()),
                 executor: action.executor.clone(),
                 preconditions: action.preconditions.clone(),
                 effects: action.effects.clone(),
@@ -1042,6 +1075,7 @@ fn build_planning_problem(
                 target_slot: None,
                 target: None,
                 sort_index: action.id.0 * 1000,
+                interruptible: action.interruptible,
             });
         }
     }
@@ -1136,6 +1170,32 @@ fn apply_successful_plan(world: &mut World, entity: Entity, draft: GoapPlanDraft
         .map(|runtime| runtime.sensor_revision)
         .unwrap_or_default();
 
+    // Acquire reservations for targeted steps
+    let domain_id = world.get::<GoapAgent>(entity).map(|a| a.domain);
+    let has_policy = domain_id
+        .and_then(|id| clone_domain(world, id))
+        .is_some_and(|d| d.reservation_policy.is_some());
+
+    let mut reserved_tokens = Vec::new();
+    if has_policy {
+        if let Some(domain_id) = domain_id {
+            let now = time_seconds(world);
+            for step in &draft.steps {
+                if let Some(ref target) = step.target {
+                    let entry = ReservationEntry {
+                        entity,
+                        action_id: step.action_id,
+                        reserved_at: now,
+                    };
+                    world
+                        .resource_mut::<GoapReservationMap>()
+                        .reserve(domain_id, target.token, entry);
+                    reserved_tokens.push(target.token);
+                }
+            }
+        }
+    }
+
     if let Some(mut runtime) = world.get_mut::<GoapRuntime>(entity) {
         runtime.status = PlannerStatus::Dispatching;
         runtime.counters.replans += 1;
@@ -1143,6 +1203,7 @@ fn apply_successful_plan(world: &mut World, entity: Entity, draft: GoapPlanDraft
         runtime.counters.total_expansions += u64::from(draft.expansions);
         runtime.last_failed_goal = None;
         runtime.last_failed_revision = None;
+        runtime.reserved_targets = reserved_tokens;
         runtime.current_plan = Some(GoapPlan::from_draft(draft, sensor_revision));
         runtime.planning_session = None;
     }
@@ -1190,11 +1251,21 @@ fn handle_action_report(world: &mut World, report: ActionExecutionReport) {
             runtime.status = PlannerStatus::WaitingOnAction;
         }
         ActionExecutionStatus::Success => {
+            let deferred = runtime.deferred_invalidation.take();
             runtime.active_action = None;
             if let Some(plan) = runtime.current_plan.as_mut() {
                 plan.advance();
             }
             runtime.status = PlannerStatus::Dispatching;
+            let _ = runtime; // release mutable borrow
+            if let Some(deferred) = deferred {
+                invalidate_plan(
+                    world,
+                    report.entity,
+                    deferred.reason,
+                    deferred.queue_replan,
+                );
+            }
         }
         ActionExecutionStatus::Failure { reason } => {
             let _ = runtime;
@@ -1216,12 +1287,68 @@ fn handle_action_report(world: &mut World, report: ActionExecutionReport) {
     }
 }
 
+fn release_agent_reservations(world: &mut World, entity: Entity) {
+    let Some(agent) = world.get::<GoapAgent>(entity).cloned() else {
+        return;
+    };
+    let domain = agent.domain;
+    let has_policy = clone_domain(world, domain)
+        .is_some_and(|d| d.reservation_policy.is_some());
+    if !has_policy {
+        return;
+    }
+
+    let tokens = world
+        .get::<GoapRuntime>(entity)
+        .map(|r| r.reserved_targets.clone())
+        .unwrap_or_default();
+
+    if !tokens.is_empty() {
+        let mut map = world.resource_mut::<GoapReservationMap>();
+        for token in &tokens {
+            if map.get(domain, token).is_some_and(|entry| entry.entity == entity) {
+                map.release(domain, *token);
+            }
+        }
+    }
+
+    if let Some(mut runtime) = world.get_mut::<GoapRuntime>(entity) {
+        runtime.reserved_targets.clear();
+    }
+}
+
+/// Returns `true` if the invalidation was applied immediately, `false` if deferred.
 fn invalidate_plan(
     world: &mut World,
     entity: Entity,
     reason: PlanInvalidationReason,
     queue_replan: bool,
-) {
+) -> bool {
+    // Determine if this is a soft invalidation that respects interruptibility.
+    let is_soft = matches!(
+        reason,
+        PlanInvalidationReason::HigherPriorityGoal | PlanInvalidationReason::SensorRefresh
+    );
+
+    if is_soft {
+        let should_defer = world
+            .get::<GoapRuntime>(entity)
+            .and_then(|runtime| runtime.active_action.as_ref())
+            .is_some_and(|action| !action.interruptible);
+
+        if should_defer {
+            if let Some(mut runtime) = world.get_mut::<GoapRuntime>(entity) {
+                runtime.deferred_invalidation = Some(DeferredInvalidation {
+                    reason,
+                    queue_replan,
+                });
+            }
+            return false;
+        }
+    }
+
+    release_agent_reservations(world, entity);
+
     let Some((goal, active_action, action_id, action_name, ticket)) =
         world.get::<GoapRuntime>(entity).map(|runtime| {
             (
@@ -1239,7 +1366,7 @@ fn invalidate_plan(
             )
         })
     else {
-        return;
+        return true;
     };
 
     if let Some(mut runtime) = world.get_mut::<GoapRuntime>(entity) {
@@ -1249,6 +1376,7 @@ fn invalidate_plan(
         runtime.last_failed_goal = None;
         runtime.last_failed_revision = None;
         runtime.last_invalidation_reason = Some(reason.clone());
+        runtime.deferred_invalidation = None;
         runtime.status = PlannerStatus::SelectingGoal;
         runtime.counters.invalidations += 1;
     }
@@ -1280,9 +1408,12 @@ fn invalidate_plan(
     if queue_replan && goal.is_some() {
         request_plan(world, entity);
     }
+    true
 }
 
 fn finish_goal(world: &mut World, entity: Entity) {
+    release_agent_reservations(world, entity);
+
     let goal = world
         .get::<GoapRuntime>(entity)
         .and_then(|runtime| runtime.current_goal.clone());
@@ -1297,6 +1428,7 @@ fn finish_goal(world: &mut World, entity: Entity) {
         runtime.current_goal = None;
         runtime.last_failed_goal = None;
         runtime.last_failed_revision = None;
+        runtime.deferred_invalidation = None;
         runtime.status = PlannerStatus::Completed;
         runtime.counters.completed_plans += 1;
         runtime.last_invalidation_reason = Some(PlanInvalidationReason::GoalCompleted);

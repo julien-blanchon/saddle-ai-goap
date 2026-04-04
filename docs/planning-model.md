@@ -81,6 +81,7 @@ Each `ActionDefinition` contains:
 - optional `context_validator`
 - optional target specification
 - stable `executor` key
+- `interruptible` flag (default `true`)
 
 The planner reasons about the metadata above. The game owns the real execution that satisfies the action.
 
@@ -129,9 +130,11 @@ Both sensor kinds:
 
 The planner performs forward A* over symbolic states.
 
-Heuristic:
+Heuristic (h_max):
 
-- count how many desired conditions are currently unsatisfied
+- for each unsatisfied goal condition, look up the minimum cost among actions whose effects can satisfy it (precomputed in `ActionRelevanceMap`)
+- return the maximum of those per-condition costs
+- admissible: never overestimates, since even an action satisfying multiple conditions still costs at least `max(min_cost_i)`
 
 Tie-breaking:
 
@@ -189,3 +192,11 @@ Game to planner:
 - `ActionExecutionReport::Cancelled`
 
 That boundary keeps the crate generic. A game can resolve an action through movement code, animation code, network RPCs, or a custom worker system without changing the planner.
+
+## World-State Hashing
+
+`GoapWorldState` maintains an incrementally-updated Zobrist hash. Each `set_raw`, `clear`, `ensure_len`, and `overlay` mutation XORs out the old slot hash and XORs in the new one. The `Hash` trait uses the cached `u64` directly, and `PartialEq` fast-rejects on hash mismatch before comparing elements. This reduces per-node HashMap operations in the planner from O(keys) to O(1) average.
+
+## Target Reservations in Planning
+
+When `GoapDomainDefinition.reservation_policy` is set, the planning problem construction phase checks each target candidate against `GoapReservationMap`. Targets reserved by other agents receive `cost_penalty` additional cost (or are skipped with `hard_block: true`). This steers the planner toward unreserved targets without hard-gating the ECS. Reservations are acquired on plan acceptance and released on plan invalidation or completion.

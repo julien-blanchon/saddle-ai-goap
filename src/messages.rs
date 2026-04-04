@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 
 use crate::components::{PlanInvalidationReason, PlannerStatus};
@@ -94,7 +96,8 @@ pub struct ActionDispatched {
     pub entity: Entity,
     pub goal_id: GoalId,
     pub action_id: ActionId,
-    pub action_name: String,
+    #[reflect(ignore)]
+    pub action_name: Arc<str>,
     pub executor: HookKey,
     pub ticket: u64,
     pub target_slot: Option<String>,
@@ -106,6 +109,7 @@ pub struct ActionCancelled {
     pub entity: Entity,
     pub ticket: u64,
     pub action_id: ActionId,
-    pub action_name: String,
+    #[reflect(ignore)]
+    pub action_name: Arc<str>,
     pub reason: PlanInvalidationReason,
 }

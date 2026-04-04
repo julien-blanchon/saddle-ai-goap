@@ -1,7 +1,10 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::planner::GoapPlannerLimits;
+use crate::reservations::ReservationPolicy;
 use crate::world_state::{
     FactCondition, FactEffect, GoapWorldState, TargetToken, WorldKeyId, WorldStateSchema,
 };
@@ -18,12 +21,36 @@ pub struct ActionId(pub usize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
 pub struct SensorId(pub usize);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect, Serialize, Deserialize)]
-pub struct HookKey(pub String);
+/// Hook lookup key. Wraps `Arc<str>` so clones through the planning pipeline
+/// are reference-count bumps instead of allocations.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[reflect(opaque)]
+#[reflect(Debug, PartialEq, Hash, Serialize, Deserialize)]
+pub struct HookKey(pub(crate) Arc<str>);
+
+impl Default for HookKey {
+    fn default() -> Self {
+        Self(Arc::from(""))
+    }
+}
+
+impl Serialize for HookKey {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.0)
+    }
+}
+
+impl<'de> Deserialize<'de> for HookKey {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self(Arc::from(s)))
+    }
+}
 
 impl HookKey {
     pub fn new(value: impl Into<String>) -> Self {
-        Self(value.into())
+        let s: String = value.into();
+        Self(Arc::from(s))
     }
 
     pub fn as_str(&self) -> &str {
@@ -33,13 +60,13 @@ impl HookKey {
 
 impl From<&str> for HookKey {
     fn from(value: &str) -> Self {
-        Self::new(value)
+        Self(Arc::from(value))
     }
 }
 
 impl From<String> for HookKey {
     fn from(value: String) -> Self {
-        Self::new(value)
+        Self(Arc::from(value))
     }
 }
 
@@ -188,6 +215,7 @@ pub struct ActionDefinition {
     pub dynamic_cost: Option<HookKey>,
     pub context_validator: Option<HookKey>,
     pub target: Option<ActionTargetSpec>,
+    pub interruptible: bool,
 }
 
 impl ActionDefinition {
@@ -202,6 +230,7 @@ impl ActionDefinition {
             dynamic_cost: None,
             context_validator: None,
             target: None,
+            interruptible: true,
         }
     }
 
@@ -237,6 +266,11 @@ impl ActionDefinition {
         self.target = Some(ActionTargetSpec::new(slot, provider));
         self
     }
+
+    pub fn with_interruptible(mut self, interruptible: bool) -> Self {
+        self.interruptible = interruptible;
+        self
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Reflect, Serialize, Deserialize)]
@@ -248,6 +282,7 @@ pub struct GoapDomainDefinition {
     pub actions: Vec<ActionDefinition>,
     pub local_sensors: Vec<SensorDefinition>,
     pub global_sensors: Vec<SensorDefinition>,
+    pub reservation_policy: Option<ReservationPolicy>,
 }
 
 impl GoapDomainDefinition {
@@ -260,11 +295,17 @@ impl GoapDomainDefinition {
             actions: Vec::new(),
             local_sensors: Vec::new(),
             global_sensors: Vec::new(),
+            reservation_policy: None,
         }
     }
 
     pub fn with_default_limits(mut self, limits: GoapPlannerLimits) -> Self {
         self.default_planner_limits = limits;
+        self
+    }
+
+    pub fn with_reservation_policy(mut self, policy: ReservationPolicy) -> Self {
+        self.reservation_policy = Some(policy);
         self
     }
 

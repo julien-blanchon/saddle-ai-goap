@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::prelude::*;
 
 use crate::definitions::{ActionId, GoalId, GoapDomainId, SensorDefinition, SensorId};
@@ -5,7 +7,7 @@ use crate::planner::{
     GoapPlanDraft, GoapPlanStep, GoapPlannerLimits, PlanningProblem, PlanningSession, SelectedGoal,
     TargetCandidate,
 };
-use crate::world_state::{GoapWorldState, WorldKeyId};
+use crate::world_state::{GoapWorldState, TargetToken, WorldKeyId};
 
 #[derive(Debug, Clone, PartialEq, Eq, Reflect)]
 pub enum PlannerStatus {
@@ -79,12 +81,14 @@ impl GoapPlan {
 pub struct ActiveAction {
     pub ticket: u64,
     pub action_id: ActionId,
-    pub action_name: String,
+    #[reflect(ignore)]
+    pub action_name: Arc<str>,
     pub target_slot: Option<String>,
     pub target: Option<TargetCandidate>,
     pub status: ActiveActionStatus,
     pub note: Option<String>,
     pub started_at_seconds: f32,
+    pub interruptible: bool,
 }
 
 impl ActiveAction {
@@ -98,8 +102,15 @@ impl ActiveAction {
             status: ActiveActionStatus::Dispatched,
             note: None,
             started_at_seconds,
+            interruptible: step.interruptible,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Reflect)]
+pub struct DeferredInvalidation {
+    pub reason: PlanInvalidationReason,
+    pub queue_replan: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Reflect)]
@@ -223,6 +234,8 @@ pub struct GoapRuntime {
     pub observed_global_revision: u64,
     pub next_action_ticket: u64,
     pub plan_cache: Vec<CachedPlanEntry>,
+    pub deferred_invalidation: Option<DeferredInvalidation>,
+    pub reserved_targets: Vec<TargetToken>,
     #[reflect(ignore)]
     pub planning_session: Option<PlanningSession>,
 }
@@ -251,6 +264,8 @@ impl GoapRuntime {
             observed_global_revision,
             next_action_ticket: 1,
             plan_cache: Vec::new(),
+            deferred_invalidation: None,
+            reserved_targets: Vec::new(),
             planning_session: None,
         }
     }

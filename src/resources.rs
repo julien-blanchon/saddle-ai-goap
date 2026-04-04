@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::Arc;
 
 use bevy::ecs::message::MessageCursor;
 use bevy::prelude::*;
@@ -34,14 +35,14 @@ impl GoapLibrary {
 
 #[derive(Resource, Default)]
 pub struct GoapHooks {
-    local_sensors: HashMap<String, LocalSensorHandler>,
-    global_sensors: HashMap<String, GlobalSensorHandler>,
-    goal_scores: HashMap<String, GoalScoreHandler>,
-    goal_validators: HashMap<String, GoalPredicateHandler>,
-    goal_completions: HashMap<String, GoalPredicateHandler>,
-    target_providers: HashMap<String, TargetProviderHandler>,
-    action_validators: HashMap<String, ActionPredicateHandler>,
-    action_costs: HashMap<String, ActionCostHandler>,
+    local_sensors: HashMap<Arc<str>, LocalSensorHandler>,
+    global_sensors: HashMap<Arc<str>, GlobalSensorHandler>,
+    goal_scores: HashMap<Arc<str>, GoalScoreHandler>,
+    goal_validators: HashMap<Arc<str>, GoalPredicateHandler>,
+    goal_completions: HashMap<Arc<str>, GoalPredicateHandler>,
+    target_providers: HashMap<Arc<str>, TargetProviderHandler>,
+    action_validators: HashMap<Arc<str>, ActionPredicateHandler>,
+    action_costs: HashMap<Arc<str>, ActionCostHandler>,
 }
 
 impl GoapHooks {

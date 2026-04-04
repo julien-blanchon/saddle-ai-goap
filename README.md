@@ -70,8 +70,9 @@ fn finish_actions(
 
 - Plugin: `GoapPlugin`
 - System sets: `GoapSystems::{Sense, SelectGoal, Plan, Dispatch, Monitor, Cleanup, Debug}`
-- Components: `GoapAgent`, `GoapRuntime`, `GoapPlan`, `ActiveAction`, `GoapDebugSnapshot`
-- Resources: `GoapLibrary`, `GoapHooks`, `GoapPlannerScheduler`, `GoapGlobalSensorCache`
+- Components: `GoapAgent`, `GoapRuntime`, `GoapPlan`, `ActiveAction`, `GoapDebugSnapshot`, `DeferredInvalidation`
+- Resources: `GoapLibrary`, `GoapHooks`, `GoapPlannerScheduler`, `GoapGlobalSensorCache`, `GoapReservationMap`
+- Reservation types: `ReservationPolicy`, `ReservationEntry`
 - Definition types: `GoapDomainDefinition`, `GoalDefinition`, `ActionDefinition`, `SensorDefinition`
 - Planner types: `PlanningProblem`, `PlanningSession`, `GoapPlannerLimits`, `SelectedGoal`, `TargetCandidate`
 - World-state types: `WorldStateSchema`, `WorldKeyId`, `FactValue`, `FactCondition`, `FactEffect`, `FactPatch`, `TargetToken`
@@ -86,7 +87,7 @@ fn finish_actions(
 - Target-aware actions:
   target providers generate `TargetCandidate` values per action slot, and planners evaluate each candidate as its own symbolic action variant.
 - Interruptible execution:
-  planning dispatches an `ActionDispatched` message and waits for `ActionExecutionReport` messages with `Running`, `Waiting`, `Success`, `Failure`, or `Cancelled`.
+  planning dispatches an `ActionDispatched` message and waits for `ActionExecutionReport` messages with `Running`, `Waiting`, `Success`, `Failure`, or `Cancelled`. Actions marked `interruptible: false` defer soft invalidations (`HigherPriorityGoal`, `SensorRefresh`) until they complete; hard invalidations (`TargetInvalidated`, `RequiredFactChanged`, `Manual`) always interrupt immediately.
 - Budgeted planning:
   `PlanningSession` supports incremental A* search, and `GoapPlannerScheduler` limits how many agents advance their planning work per frame.
 - Layered planner budgets:
@@ -95,6 +96,12 @@ fn finish_actions(
   `GoapAgentConfig::plan_cache_capacity` keeps recently successful plans reusable when the symbolic problem repeats.
 - Failed-plan retry gating:
   when a goal fails at a specific sensor revision, the runtime will not spam identical replans every frame; it waits for a goal change, invalidation, or newer sensed state before retrying.
+- Target reservations:
+  opt-in `ReservationPolicy` on `GoapDomainDefinition` tracks which agents have claimed which targets via `GoapReservationMap`. Reserved targets receive a cost penalty (or are hard-blocked) during planning, preventing multiple agents from independently targeting the same entity.
+- h_max heuristic:
+  the planner uses an action-relevance-aware `h_max` heuristic instead of a simple unsatisfied-condition count. For each goal condition, it precomputes the minimum cost among actions that can satisfy it, then returns the maximum. This is admissible and produces tighter estimates when action costs vary.
+- Zobrist-cached world state:
+  `GoapWorldState` maintains an incrementally-updated Zobrist hash for O(1) HashMap lookups during A* search, replacing per-element O(n) hashing.
 
 Domains can also be loaded from RON assets through `GoapDomainAsset` and `GoapDomainAssetLoader`.
 
@@ -164,7 +171,7 @@ uv run --active --project .codex/skills/bevy-brp/script brp extras shutdown
 ## Limitations
 
 - The crate keeps the symbolic state intentionally compact: booleans, integers, and target tokens are first-class. Rich spatial reasoning should usually stay in target providers and context validators instead of being pushed into float-heavy symbolic state.
-- Reservations, plan caching, and squad-level coordination are not built in.
+- Squad-level coordination beyond target reservations is not built in.
 - The runtime does not ship a genre-specific action executor. Games are expected to own the actual locomotion, animation, combat, or crafting behavior that satisfies dispatched actions.
 
 ## More Docs

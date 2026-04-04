@@ -9,14 +9,16 @@ pub mod definitions;
 pub mod execution;
 pub mod messages;
 pub mod planner;
+pub mod reservations;
 pub mod resources;
 pub mod systems;
 pub mod world_state;
 
 pub use assets::{GoapDomainAsset, GoapDomainAssetLoader, GoapDomainAssetLoaderError};
 pub use components::{
-    ActiveAction, ActiveActionStatus, CachedPlanEntry, GoapAgent, GoapAgentConfig, GoapCounters,
-    GoapPlan, GoapRuntime, PlanInvalidationReason, PlannerStatus, SensorRuntimeInfo,
+    ActiveAction, ActiveActionStatus, CachedPlanEntry, DeferredInvalidation, GoapAgent,
+    GoapAgentConfig, GoapCounters, GoapPlan, GoapRuntime, PlanInvalidationReason, PlannerStatus,
+    SensorRuntimeInfo,
 };
 pub use debug::{GoapDebugEntry, GoapDebugSnapshot};
 pub use definitions::{
@@ -36,6 +38,7 @@ pub use planner::{
     GoapPlanDraft, GoapPlanStep, GoapPlannerLimits, PlanningFailureReason, PlanningProblem,
     PlanningSession, PlanningStepOutcome, PreparedActionVariant, SelectedGoal, TargetCandidate,
 };
+pub use reservations::{GoapReservationMap, ReservationEntry, ReservationPolicy};
 pub use resources::{
     DomainGlobalCache, GoapGlobalSensorCache, GoapHooks, GoapLibrary, GoapPlannerScheduler,
 };
@@ -94,6 +97,7 @@ impl Plugin for GoapPlugin {
             .init_resource::<GoapHooks>()
             .init_resource::<GoapPlannerScheduler>()
             .init_resource::<GoapGlobalSensorCache>()
+            .init_resource::<GoapReservationMap>()
             .init_resource::<resources::GoapMessageCursors>()
             .init_asset::<GoapDomainAsset>()
             .register_asset_loader(GoapDomainAssetLoader)
@@ -110,6 +114,10 @@ impl Plugin for GoapPlugin {
             .add_message::<ActionCancelled>()
             .register_type::<ActiveAction>()
             .register_type::<ActiveActionStatus>()
+            .register_type::<DeferredInvalidation>()
+            .register_type::<ReservationPolicy>()
+            .register_type::<ReservationEntry>()
+            .register_type::<GoapReservationMap>()
             .register_type::<ActionCancelled>()
             .register_type::<ActionDefinition>()
             .register_type::<ActionDispatched>()

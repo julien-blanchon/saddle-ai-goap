@@ -87,6 +87,7 @@ fn test_action(
         target_slot: None,
         target: None,
         sort_index,
+        interruptible: true,
     }
 }
 
@@ -186,7 +187,7 @@ fn higher_scored_goal_is_selected() {
     run_test_schedule(&mut app);
 
     let runtime = app.world().get::<GoapRuntime>(entity).unwrap();
-    assert_eq!(runtime.current_goal.as_ref().unwrap().name, "attack");
+    assert_eq!(&*runtime.current_goal.as_ref().unwrap().name, "attack");
 }
 
 #[test]
@@ -229,7 +230,7 @@ fn action_success_feedback_completes_the_plan() {
     run_test_schedule(&mut app);
     let completed = drain_messages::<PlanCompleted>(&mut app);
     assert_eq!(completed.len(), 1);
-    assert_eq!(completed[0].goal.name, "done");
+    assert_eq!(&*completed[0].goal.name, "done");
 
     let goal_changes = drain_messages::<GoalChanged>(&mut app);
     assert_eq!(goal_changes.len(), 2);
@@ -241,7 +242,7 @@ fn action_success_feedback_completes_the_plan() {
         completion_clear
             .previous_goal
             .as_ref()
-            .map(|goal| goal.name.as_str()),
+            .map(|goal| &*goal.name),
         Some("done")
     );
     assert!(completion_clear.new_goal.is_none());
@@ -336,7 +337,7 @@ fn changing_a_required_fact_invalidates_and_requeues_the_plan() {
 
     run_test_schedule(&mut app);
     let dispatches = drain_messages::<ActionDispatched>(&mut app);
-    assert_eq!(dispatches[0].action_name, "prepare");
+    assert_eq!(&*dispatches[0].action_name, "prepare");
 
     app.world_mut().resource_mut::<BoolSensor>().0 = false;
     app.world_mut()
@@ -622,7 +623,7 @@ fn agent_planner_limits_override_domain_defaults() {
     let dispatched = drain_messages::<ActionDispatched>(&mut app);
     assert_eq!(dispatched.len(), 1);
     assert_eq!(dispatched[0].entity, entity);
-    assert_eq!(dispatched[0].action_name, "prepare");
+    assert_eq!(&*dispatched[0].action_name, "prepare");
 }
 
 #[test]
@@ -752,7 +753,7 @@ fn failed_plan_waits_for_state_change_before_retrying() {
     let dispatched = drain_messages::<ActionDispatched>(&mut app);
     assert_eq!(dispatched.len(), 1);
     assert_eq!(dispatched[0].entity, entity);
-    assert_eq!(dispatched[0].action_name, "finish");
+    assert_eq!(&*dispatched[0].action_name, "finish");
 }
 
 #[test]
@@ -830,7 +831,7 @@ fn sensor_refresh_invalidates_stale_plan_when_policy_enabled() {
     run_test_schedule(&mut app);
     let dispatches = drain_messages::<ActionDispatched>(&mut app);
     assert_eq!(dispatches.len(), 1);
-    assert_eq!(dispatches[0].action_name, "prepare");
+    assert_eq!(&*dispatches[0].action_name, "prepare");
     app.world_mut()
         .entity_mut(entity)
         .insert(StepProgress { prepared: true });
@@ -853,7 +854,7 @@ fn sensor_refresh_invalidates_stale_plan_when_policy_enabled() {
 
     let next_dispatches = drain_messages::<ActionDispatched>(&mut app);
     assert_eq!(next_dispatches.len(), 1);
-    assert_eq!(next_dispatches[0].action_name, "fast_finish");
+    assert_eq!(&*next_dispatches[0].action_name, "fast_finish");
 }
 
 #[test]
@@ -953,7 +954,7 @@ fn sensor_refresh_keeps_plan_when_policy_disabled() {
     run_test_schedule(&mut app);
     let next_dispatches = drain_messages::<ActionDispatched>(&mut app);
     assert_eq!(next_dispatches.len(), 1);
-    assert_eq!(next_dispatches[0].action_name, "safe_finish");
+    assert_eq!(&*next_dispatches[0].action_name, "safe_finish");
 }
 
 #[test]
@@ -1014,4 +1015,233 @@ fn cancelled_action_report_emits_single_cancellation_message() {
             reason: "interrupt".into()
         }
     );
+}
+
+#[test]
+fn non_interruptible_action_defers_higher_priority_goal() {
+    let mut app = test_app();
+    app.insert_resource(GoalBias {
+        attack: 1.0,
+        rest: 1.0,
+    });
+
+    let mut domain = GoapDomainDefinition::new("interrupt_test");
+    let done = domain.add_bool_key("done", None::<String>, Some(false));
+    let rested = domain.add_bool_key("rested", None::<String>, Some(false));
+
+    domain.add_goal(
+        GoalDefinition::new(GoalId(0), "finish")
+            .with_priority(10)
+            .with_desired_state([FactCondition::equals_bool(done, true)]),
+    );
+    domain.add_goal(
+        GoalDefinition::new(GoalId(1), "rest")
+            .with_priority(5)
+            .with_desired_state([FactCondition::equals_bool(rested, true)])
+            .with_relevance("rest_score"),
+    );
+    domain.add_action(
+        ActionDefinition::new(ActionId(0), "work", "work")
+            .with_effects([FactEffect::set_bool(done, true)])
+            .with_interruptible(false),
+    );
+    domain.add_action(
+        ActionDefinition::new(ActionId(1), "sleep", "sleep")
+            .with_effects([FactEffect::set_bool(rested, true)]),
+    );
+
+    let domain_id = app
+        .world_mut()
+        .resource_mut::<GoapLibrary>()
+        .register(domain);
+    app.world_mut()
+        .resource_mut::<GoapHooks>()
+        .register_goal_score("rest_score", |world, _ctx| {
+            world.resource::<GoalBias>().rest
+        });
+
+    let entity = app
+        .world_mut()
+        .spawn((Name::new("Worker"), GoapAgent::new(domain_id)))
+        .id();
+
+    // First tick: agent picks "finish" (priority 10 > rest at 5+1=6), dispatches "work"
+    run_test_schedule(&mut app);
+    let dispatches = drain_messages::<ActionDispatched>(&mut app);
+    assert_eq!(dispatches.len(), 1);
+    assert_eq!(&*dispatches[0].action_name, "work");
+
+    // Report action as Running so it stays active
+    app.world_mut()
+        .resource_mut::<Messages<ActionExecutionReport>>()
+        .write(ActionExecutionReport::new(
+            entity,
+            dispatches[0].ticket,
+            ActionExecutionStatus::Running,
+        ));
+    run_test_schedule(&mut app);
+
+    // Boost rest goal to outrank finish
+    app.world_mut().resource_mut::<GoalBias>().rest = 100.0;
+    run_test_schedule(&mut app);
+
+    // Non-interruptible "work" should NOT be cancelled
+    let cancelled = drain_messages::<ActionCancelled>(&mut app);
+    assert!(cancelled.is_empty(), "non-interruptible action should not be cancelled");
+
+    // Deferred invalidation should be stored
+    let runtime = app.world().get::<GoapRuntime>(entity).unwrap();
+    assert!(runtime.deferred_invalidation.is_some());
+    assert_eq!(
+        runtime.deferred_invalidation.as_ref().unwrap().reason,
+        PlanInvalidationReason::HigherPriorityGoal,
+    );
+
+    // Complete the action — deferred invalidation should fire
+    app.world_mut()
+        .resource_mut::<Messages<ActionExecutionReport>>()
+        .write(ActionExecutionReport::new(
+            entity,
+            dispatches[0].ticket,
+            ActionExecutionStatus::Success,
+        ));
+    run_test_schedule(&mut app);
+
+    // Plan should now be invalidated
+    let invalidated = drain_messages::<PlanInvalidated>(&mut app);
+    assert!(!invalidated.is_empty());
+
+    // Deferred invalidation should be cleared
+    let runtime = app.world().get::<GoapRuntime>(entity).unwrap();
+    assert!(runtime.deferred_invalidation.is_none());
+}
+
+#[test]
+fn interruptible_action_is_cancelled_on_higher_priority_goal() {
+    let mut app = test_app();
+    app.insert_resource(GoalBias {
+        attack: 1.0,
+        rest: 1.0,
+    });
+
+    let mut domain = GoapDomainDefinition::new("interrupt_yes");
+    let done = domain.add_bool_key("done", None::<String>, Some(false));
+    let rested = domain.add_bool_key("rested", None::<String>, Some(false));
+
+    domain.add_goal(
+        GoalDefinition::new(GoalId(0), "finish")
+            .with_priority(10)
+            .with_desired_state([FactCondition::equals_bool(done, true)]),
+    );
+    domain.add_goal(
+        GoalDefinition::new(GoalId(1), "rest")
+            .with_priority(5)
+            .with_desired_state([FactCondition::equals_bool(rested, true)])
+            .with_relevance("rest_score"),
+    );
+    // This action IS interruptible (default)
+    domain.add_action(
+        ActionDefinition::new(ActionId(0), "work", "work")
+            .with_effects([FactEffect::set_bool(done, true)]),
+    );
+    domain.add_action(
+        ActionDefinition::new(ActionId(1), "sleep", "sleep")
+            .with_effects([FactEffect::set_bool(rested, true)]),
+    );
+
+    let domain_id = app
+        .world_mut()
+        .resource_mut::<GoapLibrary>()
+        .register(domain);
+    app.world_mut()
+        .resource_mut::<GoapHooks>()
+        .register_goal_score("rest_score", |world, _ctx| {
+            world.resource::<GoalBias>().rest
+        });
+
+    let entity = app
+        .world_mut()
+        .spawn((Name::new("Worker"), GoapAgent::new(domain_id)))
+        .id();
+
+    run_test_schedule(&mut app);
+    let dispatches = drain_messages::<ActionDispatched>(&mut app);
+    assert_eq!(dispatches.len(), 1);
+
+    app.world_mut()
+        .resource_mut::<Messages<ActionExecutionReport>>()
+        .write(ActionExecutionReport::new(
+            entity,
+            dispatches[0].ticket,
+            ActionExecutionStatus::Running,
+        ));
+    run_test_schedule(&mut app);
+
+    // Boost rest
+    app.world_mut().resource_mut::<GoalBias>().rest = 100.0;
+    run_test_schedule(&mut app);
+
+    // Interruptible action SHOULD be cancelled
+    let cancelled = drain_messages::<ActionCancelled>(&mut app);
+    assert_eq!(cancelled.len(), 1, "interruptible action should be cancelled");
+
+    // No deferred invalidation
+    let runtime = app.world().get::<GoapRuntime>(entity).unwrap();
+    assert!(runtime.deferred_invalidation.is_none());
+}
+
+#[test]
+fn hard_invalidation_interrupts_non_interruptible_action() {
+    let mut app = test_app();
+
+    let mut domain = GoapDomainDefinition::new("hard_interrupt");
+    let done = domain.add_bool_key("done", None::<String>, Some(false));
+
+    domain.add_goal(
+        GoalDefinition::new(GoalId(0), "finish")
+            .with_priority(10)
+            .with_desired_state([FactCondition::equals_bool(done, true)]),
+    );
+    domain.add_action(
+        ActionDefinition::new(ActionId(0), "work", "work")
+            .with_effects([FactEffect::set_bool(done, true)])
+            .with_interruptible(false),
+    );
+
+    let domain_id = app
+        .world_mut()
+        .resource_mut::<GoapLibrary>()
+        .register(domain);
+
+    let entity = app
+        .world_mut()
+        .spawn((Name::new("Worker"), GoapAgent::new(domain_id)))
+        .id();
+
+    run_test_schedule(&mut app);
+    let dispatches = drain_messages::<ActionDispatched>(&mut app);
+    assert_eq!(dispatches.len(), 1);
+
+    app.world_mut()
+        .resource_mut::<Messages<ActionExecutionReport>>()
+        .write(ActionExecutionReport::new(
+            entity,
+            dispatches[0].ticket,
+            ActionExecutionStatus::Running,
+        ));
+    run_test_schedule(&mut app);
+
+    // Send manual invalidation (hard) — should interrupt even non-interruptible action
+    app.world_mut()
+        .resource_mut::<Messages<InvalidateGoapAgent>>()
+        .write(InvalidateGoapAgent {
+            entity,
+            reason: PlanInvalidationReason::Manual {
+                reason: "force".into(),
+            },
+        });
+    run_test_schedule(&mut app);
+
+    let cancelled = drain_messages::<ActionCancelled>(&mut app);
+    assert_eq!(cancelled.len(), 1, "hard invalidation should always interrupt");
 }

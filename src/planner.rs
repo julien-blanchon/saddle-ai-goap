@@ -1,11 +1,14 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
+use std::sync::Arc;
 
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::definitions::{ActionId, GoalId, HookKey};
-use crate::world_state::{FactCondition, FactEffect, GoapWorldState, TargetToken};
+use crate::world_state::{
+    FactComparison, FactCondition, FactEffect, FactValue, GoapWorldState, TargetToken,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Reflect, Serialize, Deserialize)]
 pub struct GoapPlannerLimits {
@@ -27,7 +30,8 @@ impl Default for GoapPlannerLimits {
 #[derive(Debug, Clone, PartialEq, Reflect)]
 pub struct SelectedGoal {
     pub id: GoalId,
-    pub name: String,
+    #[reflect(ignore)]
+    pub name: Arc<str>,
     pub priority: i32,
     pub score: f32,
 }
@@ -64,7 +68,8 @@ impl TargetCandidate {
 #[derive(Debug, Clone, PartialEq, Reflect)]
 pub struct PreparedActionVariant {
     pub action_id: ActionId,
-    pub action_name: String,
+    #[reflect(ignore)]
+    pub action_name: Arc<str>,
     pub executor: HookKey,
     pub preconditions: Vec<FactCondition>,
     pub effects: Vec<FactEffect>,
@@ -72,16 +77,19 @@ pub struct PreparedActionVariant {
     pub target_slot: Option<String>,
     pub target: Option<TargetCandidate>,
     pub sort_index: usize,
+    pub interruptible: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Reflect)]
 pub struct GoapPlanStep {
     pub action_id: ActionId,
-    pub action_name: String,
+    #[reflect(ignore)]
+    pub action_name: Arc<str>,
     pub executor: HookKey,
     pub cost: u32,
     pub target_slot: Option<String>,
     pub target: Option<TargetCandidate>,
+    pub interruptible: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Reflect)]
@@ -160,9 +168,91 @@ impl PartialOrd for QueueEntry {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Action relevance map — precomputed min-cost per goal condition
+// ---------------------------------------------------------------------------
+
+/// For each goal condition, stores the minimum action cost among actions that
+/// have an effect capable of satisfying that condition.
+#[derive(Debug, Clone)]
+struct ActionRelevanceMap {
+    /// `min_costs[i]` = minimum cost among actions that can satisfy
+    /// `desired_state[i]`, or `u32::MAX` if no action can.
+    min_costs: Vec<u32>,
+}
+
+impl ActionRelevanceMap {
+    fn build(desired_state: &[FactCondition], actions: &[PreparedActionVariant]) -> Self {
+        let min_costs = desired_state
+            .iter()
+            .map(|condition| {
+                actions
+                    .iter()
+                    .filter(|action| {
+                        action
+                            .effects
+                            .iter()
+                            .any(|effect| effect_can_satisfy(effect, condition))
+                    })
+                    .map(|action| action.cost.max(1))
+                    .min()
+                    .unwrap_or(u32::MAX)
+            })
+            .collect();
+        Self { min_costs }
+    }
+}
+
+/// Returns `true` if the given effect *could* produce a state that satisfies the
+/// condition. This is a conservative check: it may return `true` for effects that
+/// only satisfy the condition from certain starting states (e.g. `AddInt`).
+fn effect_can_satisfy(effect: &FactEffect, condition: &FactCondition) -> bool {
+    match effect {
+        FactEffect::Set(key, value) => {
+            if *key != condition.key {
+                return false;
+            }
+            match &condition.comparison {
+                FactComparison::Equals(expected) => value == expected,
+                FactComparison::NotEquals(expected) => value != expected,
+                FactComparison::GreaterOrEqual(threshold) => {
+                    matches!(value, FactValue::Int(v) if *v >= *threshold)
+                }
+                FactComparison::LessOrEqual(threshold) => {
+                    matches!(value, FactValue::Int(v) if *v <= *threshold)
+                }
+                FactComparison::IsSet => true,
+                FactComparison::IsUnset => false,
+            }
+        }
+        FactEffect::AddInt(key, delta) => {
+            if *key != condition.key {
+                return false;
+            }
+            match &condition.comparison {
+                FactComparison::GreaterOrEqual(_) => *delta > 0,
+                FactComparison::LessOrEqual(_) => *delta < 0,
+                FactComparison::NotEquals(_) => *delta != 0,
+                _ => false,
+            }
+        }
+        FactEffect::Clear(key) => {
+            if *key != condition.key {
+                return false;
+            }
+            matches!(condition.comparison, FactComparison::IsUnset)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Planning session
+// ---------------------------------------------------------------------------
+
 #[derive(Debug, Clone)]
 pub struct PlanningSession {
     problem: PlanningProblem,
+    relevance_map: ActionRelevanceMap,
     nodes: Vec<SearchNode>,
     open: BinaryHeap<QueueEntry>,
     best_costs: HashMap<GoapWorldState, u32>,
@@ -173,6 +263,9 @@ pub struct PlanningSession {
 
 impl PlanningSession {
     pub fn new(problem: PlanningProblem) -> Self {
+        let relevance_map =
+            ActionRelevanceMap::build(&problem.desired_state, &problem.actions);
+
         let root = SearchNode {
             state: problem.initial_state.clone(),
             parent: None,
@@ -184,7 +277,11 @@ impl PlanningSession {
         best_costs.insert(problem.initial_state.clone(), 0);
         let mut open = BinaryHeap::new();
         open.push(QueueEntry {
-            total_cost: heuristic(&problem.initial_state, &problem.desired_state),
+            total_cost: heuristic(
+                &problem.initial_state,
+                &problem.desired_state,
+                &relevance_map,
+            ),
             path_cost: 0,
             depth: 0,
             action_sort_index: 0,
@@ -194,6 +291,7 @@ impl PlanningSession {
 
         Self {
             problem,
+            relevance_map,
             nodes: vec![root],
             open,
             best_costs,
@@ -292,7 +390,12 @@ impl PlanningSession {
                 });
 
                 self.open.push(QueueEntry {
-                    total_cost: next_cost + heuristic(&next_state, &self.problem.desired_state),
+                    total_cost: next_cost
+                        + heuristic(
+                            &next_state,
+                            &self.problem.desired_state,
+                            &self.relevance_map,
+                        ),
                     path_cost: next_cost,
                     depth: current_depth + 1,
                     action_sort_index: action.sort_index,
@@ -324,6 +427,7 @@ impl PlanningSession {
                 cost: action.cost,
                 target_slot: action.target_slot.clone(),
                 target: action.target.clone(),
+                interruptible: action.interruptible,
             });
             node_index = parent;
         }
@@ -344,11 +448,21 @@ fn goal_satisfied(state: &GoapWorldState, desired_state: &[FactCondition]) -> bo
         .all(|condition| condition.matches(state))
 }
 
-fn heuristic(state: &GoapWorldState, desired_state: &[FactCondition]) -> u32 {
+/// h_max heuristic: returns the maximum of per-condition minimum action costs.
+/// Admissible — never overestimates because even if a single action satisfies
+/// multiple conditions, you still need to pay at least `max(min_cost_i)`.
+fn heuristic(
+    state: &GoapWorldState,
+    desired_state: &[FactCondition],
+    relevance: &ActionRelevanceMap,
+) -> u32 {
     desired_state
         .iter()
-        .filter(|condition| !condition.matches(state))
-        .count() as u32
+        .enumerate()
+        .filter(|(_, condition)| !condition.matches(state))
+        .map(|(i, _)| relevance.min_costs[i])
+        .max()
+        .unwrap_or(0)
 }
 
 #[cfg(test)]

@@ -37,6 +37,7 @@ fn action(
         target_slot: None,
         target: None,
         sort_index,
+        interruptible: true,
     }
 }
 
@@ -85,8 +86,8 @@ fn linear_chain_plan_is_found() {
     };
     assert_eq!(plan.total_cost, 2);
     assert_eq!(plan.steps.len(), 2);
-    assert_eq!(plan.steps[0].action_name, "pick_up_tool");
-    assert_eq!(plan.steps[1].action_name, "build_item");
+    assert_eq!(&*plan.steps[0].action_name, "pick_up_tool");
+    assert_eq!(&*plan.steps[1].action_name, "build_item");
 }
 
 #[test]
@@ -135,7 +136,7 @@ fn cheaper_plan_is_selected() {
     assert_eq!(
         plan.steps
             .iter()
-            .map(|step| step.action_name.as_str())
+            .map(|step| &*step.action_name)
             .collect::<Vec<_>>(),
         vec!["cheap_setup", "cheap_finish"]
     );
@@ -202,7 +203,7 @@ fn deterministic_tie_breaking_uses_action_order() {
         panic!("expected success");
     };
     assert_eq!(plan.steps.len(), 1);
-    assert_eq!(plan.steps[0].action_name, "first");
+    assert_eq!(&*plan.steps[0].action_name, "first");
 }
 
 #[test]
@@ -327,4 +328,131 @@ fn planning_session_reports_in_progress_before_success() {
 
     let final_outcome = run_to_completion(session);
     assert!(matches!(final_outcome, PlanningStepOutcome::Success(_)));
+}
+
+#[test]
+fn heuristic_uses_action_costs_not_just_count() {
+    // With the old count-based heuristic, both conditions contribute h=1 each.
+    // With h_max, the heuristic accounts for actual action costs.
+    let a = WorldKeyId(0);
+    let b = WorldKeyId(1);
+    let problem = PlanningProblem {
+        initial_state: make_state(&[]),
+        state_revision: 0,
+        goal: make_goal("two_goals"),
+        desired_state: vec![
+            FactCondition::equals_bool(a, true),
+            FactCondition::equals_bool(b, true),
+        ],
+        actions: vec![
+            action(
+                0,
+                "expensive_a",
+                10,
+                vec![],
+                vec![FactEffect::set_bool(a, true)],
+                0,
+            ),
+            action(
+                1,
+                "cheap_b",
+                1,
+                vec![],
+                vec![FactEffect::set_bool(b, true)],
+                1,
+            ),
+        ],
+        limits: GoapPlannerLimits::default(),
+    };
+
+    let session = PlanningSession::new(problem);
+    // h_max should report 10 (the max of min-costs [10, 1]) for the initial state
+    let h = heuristic(
+        &session.problem().initial_state,
+        &session.problem().desired_state,
+        &session.relevance_map,
+    );
+    assert_eq!(h, 10);
+
+    let outcome = run_to_completion(session);
+    let PlanningStepOutcome::Success(plan) = outcome else {
+        panic!("expected success");
+    };
+    assert_eq!(plan.total_cost, 11);
+}
+
+#[test]
+fn relevance_map_reports_max_for_unsatisfiable_condition() {
+    let goal_key = WorldKeyId(0);
+    let unrelated = WorldKeyId(1);
+
+    // The only action sets `unrelated`, not `goal_key`. No action can satisfy the goal.
+    let map = ActionRelevanceMap::build(
+        &[FactCondition::equals_bool(goal_key, true)],
+        &[action(
+            0,
+            "wrong",
+            1,
+            vec![],
+            vec![FactEffect::set_bool(unrelated, true)],
+            0,
+        )],
+    );
+    assert_eq!(map.min_costs[0], u32::MAX);
+}
+
+#[test]
+fn effect_can_satisfy_covers_all_comparisons() {
+    use crate::world_state::{FactComparison, TargetToken};
+
+    let key = WorldKeyId(0);
+
+    // Set(bool) satisfies Equals(bool)
+    assert!(effect_can_satisfy(
+        &FactEffect::set_bool(key, true),
+        &FactCondition::equals_bool(key, true),
+    ));
+    assert!(!effect_can_satisfy(
+        &FactEffect::set_bool(key, false),
+        &FactCondition::equals_bool(key, true),
+    ));
+
+    // Set(int) satisfies GreaterOrEqual
+    assert!(effect_can_satisfy(
+        &FactEffect::set_int(key, 10),
+        &FactCondition::int_at_least(key, 5),
+    ));
+    assert!(!effect_can_satisfy(
+        &FactEffect::set_int(key, 3),
+        &FactCondition::int_at_least(key, 5),
+    ));
+
+    // AddInt satisfies GreaterOrEqual (positive delta)
+    assert!(effect_can_satisfy(
+        &FactEffect::add_int(key, 1),
+        &FactCondition::int_at_least(key, 5),
+    ));
+    assert!(!effect_can_satisfy(
+        &FactEffect::add_int(key, -1),
+        &FactCondition::int_at_least(key, 5),
+    ));
+
+    // Clear satisfies IsUnset
+    assert!(effect_can_satisfy(
+        &FactEffect::clear(key),
+        &FactCondition::is_unset(key),
+    ));
+
+    // Set satisfies IsSet
+    assert!(effect_can_satisfy(
+        &FactEffect::set_int(key, 1),
+        &FactCondition::is_set(key),
+    ));
+
+    // Wrong key never satisfies
+    let other = WorldKeyId(1);
+    assert!(!effect_can_satisfy(
+        &FactEffect::set_bool(other, true),
+        &FactCondition::equals_bool(key, true),
+    ));
 }
