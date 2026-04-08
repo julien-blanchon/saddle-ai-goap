@@ -1,6 +1,6 @@
 mod support;
 
-use saddle_bevy_e2e::{action::Action, scenario::Scenario};
+use saddle_bevy_e2e::{action::Action, actions::assertions, scenario::Scenario};
 
 use crate::GoapLabDiagnostics;
 
@@ -45,6 +45,7 @@ fn build_smoke(name: &'static str) -> Scenario {
         })))
         .then(Action::Screenshot("smoke".into()))
         .then(Action::WaitFrames(1))
+        .then(assertions::log_summary(name))
         .build()
 }
 
@@ -100,6 +101,7 @@ fn goap_replan() -> Scenario {
         })))
         .then(Action::Screenshot("guard_resolved".into()))
         .then(Action::WaitFrames(1))
+        .then(assertions::log_summary("goap_replan"))
         .build()
 }
 
@@ -140,5 +142,6 @@ fn goap_worker_cycle() -> Scenario {
         })))
         .then(Action::Screenshot("worker_complete".into()))
         .then(Action::WaitFrames(1))
+        .then(assertions::log_summary("goap_worker_cycle"))
         .build()
 }

@@ -403,8 +403,6 @@ fn relevance_map_reports_max_for_unsatisfiable_condition() {
 
 #[test]
 fn effect_can_satisfy_covers_all_comparisons() {
-    use crate::world_state::{FactComparison, TargetToken};
-
     let key = WorldKeyId(0);
 
     // Set(bool) satisfies Equals(bool)
