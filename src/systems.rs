@@ -483,9 +483,11 @@ pub(crate) fn cleanup_agents(world: &mut World) {
     let library = world.resource::<GoapLibrary>().clone();
     for (index, domain) in library.domains.iter().enumerate() {
         if let Some(ref policy) = domain.reservation_policy {
-            world
-                .resource_mut::<GoapReservationMap>()
-                .cleanup_stale(GoapDomainId(index), policy, now);
+            world.resource_mut::<GoapReservationMap>().cleanup_stale(
+                GoapDomainId(index),
+                policy,
+                now,
+            );
         }
     }
 }
@@ -1012,9 +1014,11 @@ fn build_planning_problem(
                 // Reservation check: skip or penalize reserved targets
                 let mut reservation_penalty = 0u32;
                 if let Some(ref policy) = domain.reservation_policy {
-                    let reserved = world
-                        .resource::<GoapReservationMap>()
-                        .is_reserved_by_other(agent.domain, &target.token, entity);
+                    let reserved = world.resource::<GoapReservationMap>().is_reserved_by_other(
+                        agent.domain,
+                        &target.token,
+                        entity,
+                    );
                     if reserved {
                         if policy.hard_block {
                             continue;
@@ -1187,9 +1191,11 @@ fn apply_successful_plan(world: &mut World, entity: Entity, draft: GoapPlanDraft
                         action_id: step.action_id,
                         reserved_at: now,
                     };
-                    world
-                        .resource_mut::<GoapReservationMap>()
-                        .reserve(domain_id, target.token, entry);
+                    world.resource_mut::<GoapReservationMap>().reserve(
+                        domain_id,
+                        target.token,
+                        entry,
+                    );
                     reserved_tokens.push(target.token);
                 }
             }
@@ -1259,12 +1265,7 @@ fn handle_action_report(world: &mut World, report: ActionExecutionReport) {
             runtime.status = PlannerStatus::Dispatching;
             let _ = runtime; // release mutable borrow
             if let Some(deferred) = deferred {
-                invalidate_plan(
-                    world,
-                    report.entity,
-                    deferred.reason,
-                    deferred.queue_replan,
-                );
+                invalidate_plan(world, report.entity, deferred.reason, deferred.queue_replan);
             }
         }
         ActionExecutionStatus::Failure { reason } => {
@@ -1292,8 +1293,7 @@ fn release_agent_reservations(world: &mut World, entity: Entity) {
         return;
     };
     let domain = agent.domain;
-    let has_policy = clone_domain(world, domain)
-        .is_some_and(|d| d.reservation_policy.is_some());
+    let has_policy = clone_domain(world, domain).is_some_and(|d| d.reservation_policy.is_some());
     if !has_policy {
         return;
     }
@@ -1306,7 +1306,10 @@ fn release_agent_reservations(world: &mut World, entity: Entity) {
     if !tokens.is_empty() {
         let mut map = world.resource_mut::<GoapReservationMap>();
         for token in &tokens {
-            if map.get(domain, token).is_some_and(|entry| entry.entity == entity) {
+            if map
+                .get(domain, token)
+                .is_some_and(|entry| entry.entity == entity)
+            {
                 map.release(domain, *token);
             }
         }

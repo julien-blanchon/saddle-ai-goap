@@ -46,13 +46,11 @@ pub struct GoapReservationMap {
 }
 
 impl GoapReservationMap {
-    pub fn reserve(
-        &mut self,
-        domain: GoapDomainId,
-        token: TargetToken,
-        entry: ReservationEntry,
-    ) {
-        self.reservations.entry(domain).or_default().insert(token, entry);
+    pub fn reserve(&mut self, domain: GoapDomainId, token: TargetToken, entry: ReservationEntry) {
+        self.reservations
+            .entry(domain)
+            .or_default()
+            .insert(token, entry);
     }
 
     pub fn release(&mut self, domain: GoapDomainId, token: TargetToken) {
@@ -79,11 +77,7 @@ impl GoapReservationMap {
             .is_some_and(|entry| entry.entity != entity)
     }
 
-    pub fn get(
-        &self,
-        domain: GoapDomainId,
-        token: &TargetToken,
-    ) -> Option<&ReservationEntry> {
+    pub fn get(&self, domain: GoapDomainId, token: &TargetToken) -> Option<&ReservationEntry> {
         self.reservations.get(&domain).and_then(|m| m.get(token))
     }
 

@@ -263,8 +263,7 @@ pub struct PlanningSession {
 
 impl PlanningSession {
     pub fn new(problem: PlanningProblem) -> Self {
-        let relevance_map =
-            ActionRelevanceMap::build(&problem.desired_state, &problem.actions);
+        let relevance_map = ActionRelevanceMap::build(&problem.desired_state, &problem.actions);
 
         let root = SearchNode {
             state: problem.initial_state.clone(),

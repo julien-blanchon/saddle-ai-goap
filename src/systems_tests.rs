@@ -1087,7 +1087,10 @@ fn non_interruptible_action_defers_higher_priority_goal() {
 
     // Non-interruptible "work" should NOT be cancelled
     let cancelled = drain_messages::<ActionCancelled>(&mut app);
-    assert!(cancelled.is_empty(), "non-interruptible action should not be cancelled");
+    assert!(
+        cancelled.is_empty(),
+        "non-interruptible action should not be cancelled"
+    );
 
     // Deferred invalidation should be stored
     let runtime = app.world().get::<GoapRuntime>(entity).unwrap();
@@ -1183,7 +1186,11 @@ fn interruptible_action_is_cancelled_on_higher_priority_goal() {
 
     // Interruptible action SHOULD be cancelled
     let cancelled = drain_messages::<ActionCancelled>(&mut app);
-    assert_eq!(cancelled.len(), 1, "interruptible action should be cancelled");
+    assert_eq!(
+        cancelled.len(),
+        1,
+        "interruptible action should be cancelled"
+    );
 
     // No deferred invalidation
     let runtime = app.world().get::<GoapRuntime>(entity).unwrap();
@@ -1243,5 +1250,9 @@ fn hard_invalidation_interrupts_non_interruptible_action() {
     run_test_schedule(&mut app);
 
     let cancelled = drain_messages::<ActionCancelled>(&mut app);
-    assert_eq!(cancelled.len(), 1, "hard invalidation should always interrupt");
+    assert_eq!(
+        cancelled.len(),
+        1,
+        "hard invalidation should always interrupt"
+    );
 }
