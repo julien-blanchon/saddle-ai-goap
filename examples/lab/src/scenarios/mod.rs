@@ -26,14 +26,7 @@ pub fn scenario_by_name(name: &str) -> Option<Scenario> {
 fn build_smoke(name: &'static str) -> Scenario {
     Scenario::builder(name)
         .description("Boot the crate-local GOAP lab, wait for both agents to acquire plans, and capture the default planner overlay.")
-        .then(Action::WaitUntil {
-            label: "agents planned".into(),
-            condition: Box::new(|world| {
-                let diagnostics = world.resource::<GoapLabDiagnostics>();
-                diagnostics.guard_plan_starts > 0 && diagnostics.worker_plan_starts > 0
-            }),
-            max_frames: 90,
-        })
+        .then(support::wait_for_core_plans())
         .then(Action::Custom(Box::new(|world| {
             let diagnostics = world.resource::<GoapLabDiagnostics>();
             assert!(diagnostics.guard_plan_starts > 0);
@@ -52,25 +45,10 @@ fn build_smoke(name: &'static str) -> Scenario {
 fn goap_replan() -> Scenario {
     Scenario::builder("goap_replan")
         .description("Verify the guard loses its first target, invalidates the plan with a target-specific reason, replans, and completes against the fallback target.")
-        .then(Action::WaitUntil {
-            label: "guard first plan".into(),
-            condition: Box::new(|world| world.resource::<GoapLabDiagnostics>().guard_plan_starts > 0),
-            max_frames: 90,
-        })
+        .then(support::wait_for_guard_plan_started())
         .then(Action::Screenshot("guard_initial".into()))
         .then(Action::WaitFrames(1))
-        .then(Action::WaitUntil {
-            label: "guard invalidated".into(),
-            condition: Box::new(|world| {
-                let diagnostics = world.resource::<GoapLabDiagnostics>();
-                diagnostics.guard_plan_invalidations >= 1
-                    && diagnostics
-                        .guard_last_invalidation
-                        .as_deref()
-                        .is_some_and(|reason| reason.contains("TargetInvalidated"))
-            }),
-            max_frames: 180,
-        })
+        .then(support::wait_for_guard_invalidation())
         .then(Action::Custom(Box::new(|world| {
             let diagnostics = world.resource::<GoapLabDiagnostics>();
             assert!(diagnostics.guard_plan_invalidations >= 1);
@@ -83,16 +61,7 @@ fn goap_replan() -> Scenario {
         })))
         .then(Action::Screenshot("guard_replan".into()))
         .then(Action::WaitFrames(1))
-        .then(Action::WaitUntil {
-            label: "guard completes".into(),
-            condition: Box::new(|world| {
-                let diagnostics = world.resource::<GoapLabDiagnostics>();
-                diagnostics.guard_plan_starts >= 2
-                    && diagnostics.guard_plan_completions >= 1
-                    && diagnostics.guard_targets_remaining == 0
-            }),
-            max_frames: 240,
-        })
+        .then(support::wait_for_guard_completion())
         .then(Action::Custom(Box::new(|world| {
             let diagnostics = world.resource::<GoapLabDiagnostics>();
             assert!(diagnostics.guard_plan_starts >= 2);
@@ -108,14 +77,7 @@ fn goap_replan() -> Scenario {
 fn goap_worker_cycle() -> Scenario {
     Scenario::builder("goap_worker_cycle")
         .description("Verify the worker loses workstation availability mid-plan, invalidates, replans after the workbench returns, and eventually deposits the ingot.")
-        .then(Action::WaitUntil {
-            label: "worker blocked".into(),
-            condition: Box::new(|world| {
-                let diagnostics = world.resource::<GoapLabDiagnostics>();
-                diagnostics.worker_plan_invalidations >= 1 && !diagnostics.workbench_available
-            }),
-            max_frames: 180,
-        })
+        .then(support::wait_for_worker_blocked())
         .then(Action::Custom(Box::new(|world| {
             let diagnostics = world.resource::<GoapLabDiagnostics>();
             assert!(diagnostics.worker_plan_invalidations >= 1);
@@ -123,16 +85,7 @@ fn goap_worker_cycle() -> Scenario {
         })))
         .then(Action::Screenshot("worker_blocked".into()))
         .then(Action::WaitFrames(1))
-        .then(Action::WaitUntil {
-            label: "worker delivered".into(),
-            condition: Box::new(|world| {
-                let diagnostics = world.resource::<GoapLabDiagnostics>();
-                diagnostics.worker_plan_completions >= 1
-                    && diagnostics.worker_deposited
-                    && diagnostics.workbench_available
-            }),
-            max_frames: 300,
-        })
+        .then(support::wait_for_worker_delivery())
         .then(Action::Custom(Box::new(|world| {
             let diagnostics = world.resource::<GoapLabDiagnostics>();
             assert!(diagnostics.worker_plan_starts >= 2);
