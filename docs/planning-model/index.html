@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<script>
+			(() => {
+				document.documentElement.classList.add('js');
+				const storageKey = 'docs-theme';
+				const storedTheme = localStorage.getItem(storageKey);
+				const isDark =
+					storedTheme === 'dark' ||
+					(storedTheme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+				document.documentElement.classList.toggle('dark', isDark);
+				document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+			})();
+		</script>
+		<link href="../../_app/immutable/entry/start.DDQ7g6Cb.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/BGv9E_ea.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/D6rU7RKI.js" rel="modulepreload">
+		<link href="../../_app/immutable/entry/app.BzKhkPjR.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/D2PL5qU_.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/DsnmJJEf.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/CGbRUU1n.js" rel="modulepreload">
+		<link href="../../_app/immutable/nodes/0.DMskIImO.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/cmvA7CmX.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/Ds0qktUn.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/D3udy8KQ.js" rel="modulepreload">
+		<link href="../../_app/immutable/nodes/2.BoqJtiiS.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/Ckg5JSTz.js" rel="modulepreload">
+		<link href="../../_app/immutable/nodes/5.BOp3_yHr.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/O7QY0ZL7.js" rel="modulepreload">
+		<!--12qhfyh--><meta name="theme-color" content="#ffffff"/> <link rel="icon" type="image/svg+xml" href="../../favicon.svg"/> <meta name="description" content="Reusable GOAP runtime for Bevy"/><!----><!--1bpnej--><!--[0--><meta name="description" content="Planning Model documentation"/><!--]--><!----><title>Planning Model - saddle-ai-goap</title>
+		<link href="../../_app/immutable/assets/manifest.DAGDUwuc.css" rel="stylesheet">
+		<link href="../../_app/immutable/assets/0.Cu___w4E.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents"><!--[--><!--[0--><!--[--><!--[0--><!--[--><main class="relative h-dvh bg-background text-foreground"><div class="fixed inset-x-0 top-0 z-50 flex items-center justify-between border-b border-border bg-background px-4 py-1.5 lg:hidden"><a href="../../" class="inline-flex items-center gap-1 px-2 py-2 text-sm tracking-tight text-foreground"><span class="font-medium tracking-tight text-foreground">saddle-ai-goap</span></a> <button class="-mr-2 inline-flex size-10 items-center justify-center gap-2 rounded-sm text-sm whitespace-nowrap text-foreground transition-colors duration-150 ease-out hover:bg-background-muted lg:hidden" aria-label="Toggle menu"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="20" height="20" aria-hidden="true"><!--[-1--><!--]--><path d="M4 6H28V8H4z"></path><path d="M4 24H28V26H4z"></path><path d="M4 12H28V14H4z"></path><path d="M4 18H28V20H4z"></path></svg><!----></button></div> <!--[-1--><!--]--><!----> <div class="flex h-full w-full min-w-0 lg:grid lg:grid-cols-[22rem_minmax(0,1fr)] lg:pr-4 xl:grid-cols-[22rem_minmax(0,56rem)_18rem] xl:justify-center"><div class="hidden lg:block"><aside class="flex h-dvh flex-col bg-background" aria-label="Documentation sidebar"><div class="flex flex-col gap-4 p-4"><a href="../../" class="flex items-center gap-2"><span class="text-xl font-medium tracking-tight text-foreground">saddle-ai-goap</span></a> <!--[0--><button type="button" class="group inset-shadow relative flex h-9 w-full items-center gap-2 rounded-sm bg-background-inset px-3 py-1.5 text-sm font-medium text-foreground-muted/70 transition-[color] duration-150 ease-out hover:text-foreground-muted"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden="true" class="text-foreground-muted/70"><!--[-1--><!--]--><path d="M29,27.5859l-7.5521-7.5521a11.0177,11.0177,0,1,0-1.4141,1.4141L27.5859,29ZM4,13a9,9,0,1,1,9,9A9.01,9.01,0,0,1,4,13Z"></path></svg><!----> <span class="flex-1 text-left">Search...</span> <!--[0--><kbd class="card pointer-events-none relative hidden h-5 items-center gap-1 rounded-xs bg-background px-1.5 font-mono text-[10px] font-medium text-foreground-muted/70 select-none sm:flex">⌘ K</kbd><!--]--></button><!--]--><!----></div> <div class="relative flex flex-col overflow-hidden flex-1 svelte-1lcbi17"><div class="scrollbar-hide min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto p-4 svelte-1lcbi17" style="mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent);"><nav class="flex flex-col space-y-1" aria-label="Documentation pages"><h4 class="mb-2 ml-2 text-xs font-medium tracking-wide text-foreground-muted/70 uppercase">Docs</h4> <!--[--><!--[-1--><a href="../../" class="block rounded-sm px-3 py-1.5 text-sm tracking-normal transition-all duration-150 ease-out text-foreground-muted hover:bg-background-muted hover:text-foreground">Overview</a><!--]--><!--[0--><button class="flex w-full items-center justify-between rounded-sm px-3 py-1.5 text-sm font-medium tracking-normal transition-all duration-150 ease-out hover:bg-background-muted hover:text-foreground text-foreground-muted"><span>Documentation</span> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden="true" class="size-4 transition-transform duration-150"><!--[-1--><!--]--><path d="M22 16 12 26 10.6 24.6 19.2 16 10.6 7.4 12 6z"></path></svg><!----></button> <!--[-1--><!--]--><!--]--><!--[0--><button class="flex w-full items-center justify-between rounded-sm px-3 py-1.5 text-sm font-medium tracking-normal transition-all duration-150 ease-out hover:bg-background-muted hover:text-foreground text-foreground-muted"><span>Demos</span> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden="true" class="size-4 transition-transform duration-150"><!--[-1--><!--]--><path d="M22 16 12 26 10.6 24.6 19.2 16 10.6 7.4 12 6z"></path></svg><!----></button> <!--[-1--><!--]--><!--]--><!--]--></nav><!----></div></div><!----> <div class="flex items-center gap-1 p-4"><!--[0--><button type="button" class="group transition-scale inset-shadow relative inline-flex size-7 items-center justify-center rounded-sm bg-background-inset text-foreground duration-150 ease-out active:scale-[0.95]" aria-label="Switch to dark mode"><span class="sr-only">Switch to dark mode</span> <span class="transition-transform duration-150 ease-out"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden="true"><!--[-1--><!--]--><path d="M16,12a4,4,0,1,1-4,4,4.0045,4.0045,0,0,1,4-4m0-2a6,6,0,1,0,6,6,6,6,0,0,0-6-6Z" transform="translate(0 .005)"></path><path d="M6.854 5.375H8.854V10.333H6.854z" transform="rotate(-45 7.86 7.856)"></path><path d="M2 15.005H7V17.005000000000003H2z"></path><path d="M5.375 23.147H10.333V25.147H5.375z" transform="rotate(-45 7.86 24.149)"></path><path d="M15 25.005H17V30.005H15z"></path><path d="M23.147 21.668H25.147V26.625999999999998H23.147z" transform="rotate(-45 24.152 24.149)"></path><path d="M25 15.005H30V17.005000000000003H25z"></path><path d="M21.668 6.854H26.625999999999998V8.854H21.668z" transform="rotate(-45 24.152 7.856)"></path><path d="M15 2.005H17V7.005H15z"></path></svg><!----></span> <span class="absolute transition-transform duration-150 ease-out scale-0 blur-[2px]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden="true"><!--[-1--><!--]--><path d="M13.5025,5.4136A15.0755,15.0755,0,0,0,25.096,23.6082a11.1134,11.1134,0,0,1-7.9749,3.3893c-.1385,0-.2782.0051-.4178,0A11.0944,11.0944,0,0,1,13.5025,5.4136M14.98,3a1.0024,1.0024,0,0,0-.1746.0156A13.0959,13.0959,0,0,0,16.63,28.9973c.1641.006.3282,0,.4909,0a13.0724,13.0724,0,0,0,10.702-5.5556,1.0094,1.0094,0,0,0-.7833-1.5644A13.08,13.08,0,0,1,15.8892,4.38,1.0149,1.0149,0,0,0,14.98,3Z"></path></svg><!----></span></button><!--]--> <!--[0--><a class="group transition-scale inset-shadow relative inline-flex size-7 cursor-pointer items-center justify-center rounded-sm bg-background-inset text-foreground duration-150 ease-out active:scale-[0.95]" href="https://github.com/julien-blanchon/saddle-ai-goap" target="_blank" rel="noreferrer" aria-label="Open project repository (opens in a new tab)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden="true" class="size-4 flex-none"><!--[-1--><!--]--><path fill-rule="evenodd" d="M16,2a14,14,0,0,0-4.43,27.28c.7.13,1-.3,1-.67s0-1.21,0-2.38c-3.89.84-4.71-1.88-4.71-1.88A3.71,3.71,0,0,0,6.24,22.3c-1.27-.86.1-.85.1-.85A2.94,2.94,0,0,1,8.48,22.9a3,3,0,0,0,4.08,1.16,2.93,2.93,0,0,1,.88-1.87c-3.1-.36-6.37-1.56-6.37-6.92a5.4,5.4,0,0,1,1.44-3.76,5,5,0,0,1,.14-3.7s1.17-.38,3.85,1.43a13.3,13.3,0,0,1,7,0c2.67-1.81,3.84-1.43,3.84-1.43a5,5,0,0,1,.14,3.7,5.4,5.4,0,0,1,1.44,3.76c0,5.38-3.27,6.56-6.39,6.91a3.33,3.33,0,0,1,.95,2.59c0,1.87,0,3.38,0,3.84s.25.81,1,.67A14,14,0,0,0,16,2Z"></path></svg><!----></a><!--]--></div></aside><!----></div> <div class="inset-shadow relative mx-auto h-full w-full max-w-4xl min-w-0 overflow-hidden border border-border bg-background-inset pt-12 lg:my-4 lg:max-h-[calc(100dvh-2rem)] lg:overflow-visible lg:rounded-xl lg:pt-0"><div class="relative flex flex-col overflow-hidden mx-auto h-full w-full lg:max-h-[calc(100dvh-2rem)] svelte-1lcbi17"><div id="docs-content-container" class="scrollbar-hide min-h-0 w-full flex-1 overflow-x-hidden overflow-y-auto rounded-lg overscroll-none flex flex-col gap-8 px-4 py-8 lg:px-8 svelte-1lcbi17" style="mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, black 16px, black calc(100% - 16px), transparent);"><section class="min-w-0 flex-1 space-y-8"><div class="space-y-4"><!--[-1--><!--]--> <h1 class="scroll-m-20 text-3xl font-medium tracking-tight text-foreground">Planning Model</h1> <!--[0--><p class="max-w-4xl text-base font-normal tracking-normal text-foreground-muted">Planning Model documentation</p><!--]--> <!--[0--><!--[0--><div class="relative z-20 mt-8 flex w-full gap-2 lg:hidden"><!--[0--><div class="inset-shadow w-full rounded-md bg-background-inset p-1.5"><button type="button" aria-live="polite" aria-disabled="false" class="card relative inline-flex h-9 w-full font-medium shrink-0 overflow-hidden items-center justify-center gap-2 rounded-sm bg-background px-4 py-2 text-sm whitespace-nowrap text-foreground transition-[background-color] duration-150 ease-out hover:bg-background-muted disabled:pointer-events-none disabled:opacity-50 has-[>svg]:px-3 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 [&amp;_svg:not([class*=size-])]:size-4 flex-1"><span class="grid place-items-center" style="grid-template-areas: 'content';"><!----><span class="flex items-center gap-2 font-medium tracking-normal text-foreground will-change-transform" style="grid-area: content;"><!--[-1--><svg role="img" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="size-4 flex-none"><title>Markdown</title><path class="stroke-current" d="M1.212 5.5h21.576c.407 0 .712.317.712.679v11.549a.695.695 0 0 1-.712.677H1.212a.695.695 0 0 1-.712-.678V6.18c0-.362.305-.679.712-.679Z"></path><path class="fill-current" d="M3.03 15.96V7.946h2.425l2.424 2.946 2.424-2.946h2.424v8.014h-2.424v-4.596L7.88 14.31l-2.424-2.946v4.596H3.03Zm15.152 0-3.636-3.89h2.424V7.947h2.424v4.125h2.424l-3.636 3.889Z"></path></svg><!--]--> <span>Copy Markdown</span></span><!----></span></button></div><!--]--> <!--[0--><div class="inset-shadow relative rounded-md bg-background-inset p-1.5"><button id="mobile-doc-actions-menu-trigger" type="button" class="card relative inline-flex h-9 w-full font-medium shrink-0 overflow-hidden items-center justify-center gap-2 rounded-sm bg-background px-4 py-2 text-sm whitespace-nowrap text-foreground transition-[background-color] duration-150 ease-out hover:bg-background-muted disabled:pointer-events-none disabled:opacity-50 has-[>svg]:px-3 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 [&amp;_svg:not([class*=size-])]:size-4 flex-1 w-auto! px-2.5!" aria-label="More actions" aria-haspopup="menu" aria-controls="mobile-doc-actions-menu" aria-expanded="false"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden="true" class="size-4"><!--[-1--><!--]--><circle cx="8" cy="16" r="2"></circle><circle cx="16" cy="16" r="2"></circle><circle cx="24" cy="16" r="2"></circle></svg><!----></button> <!--[-1--><!--]--></div><!--]--></div><!--]--><!--]--></div> <hr class="text-border"/> <div><!--[--><article data-doc-content="" class="w-full max-w-4xl"><!----><p><code>saddle-ai-goap</code> plans over symbolic facts, not raw ECS snapshots.</p>
+<h2>World-State Model</h2>
+<p>The planner-visible state lives in <code>GoapWorldState</code> and is keyed by <code>WorldKeyId</code> entries from <code>WorldStateSchema</code>.</p>
+<p>Supported first-class value types:</p>
+<ul>
+<li><code>Bool</code></li>
+<li><code>Int</code></li>
+<li><code>Target</code></li>
+</ul>
+<p>Why no built-in float or position facts in v1:</p>
+<ul>
+<li>planner-visible state should stay compact and deterministic</li>
+<li>float-heavy symbolic states are awkward to hash and compare</li>
+<li>most spatial reasoning is better modeled as target selection plus context validation</li>
+</ul>
+<p>If a domain needs location-aware planning, prefer:</p>
+<ul>
+<li>target providers returning <code>TargetCandidate</code></li>
+<li><code>TargetCandidate::debug_position</code> for overlays and tooling</li>
+<li>context validators or dynamic cost hooks for reachability, reservation, or travel heuristics</li>
+</ul>
+<h2>Facts</h2>
+<h3><code>FactCondition</code></h3>
+<p>Supported comparisons:</p>
+<ul>
+<li>equality / inequality</li>
+<li>integer <code>&gt;=</code></li>
+<li>integer <code>&lt;=</code></li>
+<li><code>IsSet</code></li>
+<li><code>IsUnset</code></li>
+</ul>
+<h3><code>FactEffect</code></h3>
+<p>Supported symbolic effects:</p>
+<ul>
+<li>set a fact</li>
+<li>add to an integer fact</li>
+<li>clear a fact</li>
+</ul>
+<h3><code>FactPatch</code></h3>
+<p>Sensors emit <code>FactPatch</code> values to update symbolic memory.</p>
+<h2>Goals</h2>
+<p>Goals describe desired outcomes, not scripts.</p>
+<p>Each <code>GoalDefinition</code> contains:</p>
+<ul>
+<li><code>desired_state</code></li>
+<li>fixed <code>priority</code></li>
+<li>optional dynamic <code>relevance</code></li>
+<li>optional <code>validator</code></li>
+<li>optional <code>completion</code></li>
+</ul>
+<p>Selection model:</p>
+<ol>
+<li>reject invalid goals</li>
+<li>ignore already-complete goals</li>
+<li>compute <code>priority + dynamic relevance</code></li>
+<li>pick the highest score</li>
+<li>if <code>preempt_on_better_goal</code> is enabled, switch only when the new goal beats the current one by <code>goal_switch_margin</code></li>
+</ol>
+<h2>Actions</h2>
+<p>Actions are symbolic planning units, not full gameplay stacks.</p>
+<p>Each <code>ActionDefinition</code> contains:</p>
+<ul>
+<li>symbolic <code>preconditions</code></li>
+<li>symbolic <code>effects</code></li>
+<li><code>base_cost</code></li>
+<li>optional <code>dynamic_cost</code></li>
+<li>optional <code>context_validator</code></li>
+<li>optional target specification</li>
+<li>stable <code>executor</code> key</li>
+<li><code>interruptible</code> flag (default <code>true</code>)</li>
+</ul>
+<p>The planner reasons about the metadata above. The game owns the real execution that satisfies the action.</p>
+<h2>Target-Aware Actions</h2>
+<p>Target-aware actions use:</p>
+<ul>
+<li><code>ActionTargetSpec</code>
+symbolic slot name plus provider key</li>
+<li><code>TargetProviderContext</code>
+entity, domain, goal, current symbolic state, and action definition</li>
+<li><code>TargetCandidate</code>
+stable token, label, optional debug position, and optional cost bias</li>
+</ul>
+<p>Planning flow:</p>
+<ol>
+<li>target provider returns candidates</li>
+<li>each candidate becomes a <code>PreparedActionVariant</code></li>
+<li>optional context validation filters candidates</li>
+<li>optional dynamic cost hook adjusts each candidate</li>
+<li>the cheapest valid target-bound plan wins</li>
+</ol>
+<p>This is what lets one symbolic action represent &quot;use workstation A&quot; and &quot;use workstation B&quot; without making the planner blind to which target it actually chose.</p>
+<h2>Sensors</h2>
+<p>Sensors are the boundary between rich ECS data and symbolic memory.</p>
+<h3>Local sensors</h3>
+<ul>
+<li>run per agent</li>
+<li>update agent-specific facts such as inventory, threat, or local cooldowns</li>
+</ul>
+<h3>Global sensors</h3>
+<ul>
+<li>run per domain</li>
+<li>update shared facts or expensive cached data once for many agents</li>
+</ul>
+<p>Both sensor kinds:</p>
+<ul>
+<li>support polling intervals</li>
+<li>support explicit invalidation via messages</li>
+<li>update runtime bookkeeping so BRP and overlays can inspect last run time, next due time, and notes</li>
+</ul>
+<h2>Plan Search</h2>
+<p>The planner performs forward A* over symbolic states.</p>
+<p>Heuristic (h_max):</p>
+<ul>
+<li>for each unsatisfied goal condition, look up the minimum cost among actions whose effects can satisfy it (precomputed in <code>ActionRelevanceMap</code>)</li>
+<li>return the maximum of those per-condition costs</li>
+<li>admissible: never overestimates, since even an action satisfying multiple conditions still costs at least <code>max(min_cost_i)</code></li>
+</ul>
+<p>Tie-breaking:</p>
+<ul>
+<li>lower total estimated cost first</li>
+<li>then lower path cost</li>
+<li>then shallower depth</li>
+<li>then action declaration order / target candidate order</li>
+<li>then insertion order</li>
+</ul>
+<p>That ordering keeps results deterministic for the same inputs.</p>
+<h2>Replanning Policy</h2>
+<p>The runtime distinguishes several invalidation paths:</p>
+<ul>
+<li><code>RequiredFactChanged</code>
+remaining step precondition no longer matches</li>
+<li><code>TargetInvalidated</code>
+chosen target vanished or no longer passes context validation</li>
+<li><code>ActionFailed</code>
+execution reported failure</li>
+<li><code>HigherPriorityGoal</code>
+goal selection chose a better goal</li>
+<li><code>SensorRefresh</code>
+a newer sensor revision made the current plan or in-flight planning session stale and the agent is configured to react to that</li>
+<li><code>GoalNoLongerValid</code>
+goal validator failed</li>
+<li><code>GoalCompleted</code>
+goal finished</li>
+<li><code>Manual</code>
+external system explicitly invalidated the planner</li>
+</ul>
+<p>Default execution policy:</p>
+<ul>
+<li>keep the current action alive while it is <code>Running</code> or <code>Waiting</code></li>
+<li>invalidate immediately if the action&#39;s current target disappears</li>
+<li>invalidate immediately if the current step&#39;s required facts stop matching</li>
+<li>between actions, optionally invalidate on <code>SensorRefresh</code></li>
+<li>after <code>PlanFailed</code>, hold that failure until the goal changes or sensors advance to a newer revision, instead of retrying the same impossible search every frame</li>
+</ul>
+<h2>Execution Handoff</h2>
+<p>Execution is message-driven.</p>
+<p>Planner to game:</p>
+<ul>
+<li><code>ActionDispatched</code></li>
+</ul>
+<p>Game to planner:</p>
+<ul>
+<li><code>ActionExecutionReport::Running</code></li>
+<li><code>ActionExecutionReport::Waiting</code></li>
+<li><code>ActionExecutionReport::Success</code></li>
+<li><code>ActionExecutionReport::Failure</code></li>
+<li><code>ActionExecutionReport::Cancelled</code></li>
+</ul>
+<p>That boundary keeps the crate generic. A game can resolve an action through movement code, animation code, network RPCs, or a custom worker system without changing the planner.</p>
+<h2>World-State Hashing</h2>
+<p><code>GoapWorldState</code> maintains an incrementally-updated Zobrist hash. Each <code>set_raw</code>, <code>clear</code>, <code>ensure_len</code>, and <code>overlay</code> mutation XORs out the old slot hash and XORs in the new one. The <code>Hash</code> trait uses the cached <code>u64</code> directly, and <code>PartialEq</code> fast-rejects on hash mismatch before comparing elements. This reduces per-node HashMap operations in the planner from O(keys) to O(1) average.</p>
+<h2>Target Reservations in Planning</h2>
+<p>When <code>GoapDomainDefinition.reservation_policy</code> is set, the planning problem construction phase checks each target candidate against <code>GoapReservationMap</code>. Targets reserved by other agents receive <code>cost_penalty</code> additional cost (or are skipped with <code>hard_block: true</code>). This steers the planner toward unreserved targets without hard-gating the ECS. Reservations are acquired on plan acceptance and released on plan invalidation or completion.</p>
+<!----></article> <!----><!--]--><!----> <!--[-1--><!--]--><!----></div></section><!----></div></div><!----></div> <aside class="hidden xl:block xl:w-full xl:py-8 xl:pr-4 xl:pl-4" aria-label="Table of contents and document actions"><div class="sticky top-8 flex h-full max-h-[calc(100dvh-4rem)] min-h-0 flex-col"><!--[0--><div class="min-h-0 flex-1"><div class="contents"><!--[-1--><div class="hidden text-sm tracking-normal text-foreground-muted/70 lg:block">No headings</div><!--]--></div><!----></div><!--]--> <!--[0--><!--[0--><div class="mt-auto"><div class="flex flex-col gap-1 text-sm"><!--[0--><button type="button" aria-live="polite" aria-disabled="false" class="group/option flex items-center gap-2 overflow-hidden rounded-sm px-3 py-1.5 text-left font-medium tracking-normal text-foreground-muted transition-colors duration-150 ease-out hover:bg-background-muted hover:text-foreground"><span class="grid" style="grid-template-areas: 'content';"><!----><span class="flex items-center gap-2" style="grid-area: content;"><!--[-1--><svg role="img" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="size-4 flex-none"><title>Markdown</title><path class="stroke-current" d="M1.212 5.5h21.576c.407 0 .712.317.712.679v11.549a.695.695 0 0 1-.712.677H1.212a.695.695 0 0 1-.712-.678V6.18c0-.362.305-.679.712-.679Z"></path><path class="fill-current" d="M3.03 15.96V7.946h2.425l2.424 2.946 2.424-2.946h2.424v8.014h-2.424v-4.596L7.88 14.31l-2.424-2.946v4.596H3.03Zm15.152 0-3.636-3.89h2.424V7.947h2.424v4.125h2.424l-3.636 3.889Z"></path></svg><!--]--> <span>Copy as Markdown</span></span><!----></span></button><!--]--> <!--[0--><a class="group/option flex items-center gap-2 rounded-sm px-3 py-1.5 text-left font-medium tracking-normal text-foreground-muted transition-colors duration-150 ease-out hover:bg-background-muted hover:text-foreground" href="https://github.com/julien-blanchon/saddle-ai-goap/blob/main/docs//saddle-ai-goap/docs/planning-model.md" target="_blank" rel="noreferrer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden="true" class="size-4 flex-none"><!--[-1--><!--]--><path fill-rule="evenodd" d="M16,2a14,14,0,0,0-4.43,27.28c.7.13,1-.3,1-.67s0-1.21,0-2.38c-3.89.84-4.71-1.88-4.71-1.88A3.71,3.71,0,0,0,6.24,22.3c-1.27-.86.1-.85.1-.85A2.94,2.94,0,0,1,8.48,22.9a3,3,0,0,0,4.08,1.16,2.93,2.93,0,0,1,.88-1.87c-3.1-.36-6.37-1.56-6.37-6.92a5.4,5.4,0,0,1,1.44-3.76,5,5,0,0,1,.14-3.7s1.17-.38,3.85,1.43a13.3,13.3,0,0,1,7,0c2.67-1.81,3.84-1.43,3.84-1.43a5,5,0,0,1,.14,3.7,5.4,5.4,0,0,1,1.44,3.76c0,5.38-3.27,6.56-6.39,6.91a3.33,3.33,0,0,1,.95,2.59c0,1.87,0,3.38,0,3.84s.25.81,1,.67A14,14,0,0,0,16,2Z"></path></svg><!----> <span>Open in GitHub</span> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" preserveAspectRatio="xMidYMid meet" width="16" height="16" aria-hidden="true" class="ml-auto size-4 flex-none"><!--[-1--><!--]--><path d="M26,28H6a2.0027,2.0027,0,0,1-2-2V6A2.0027,2.0027,0,0,1,6,4H16V6H6V26H26V16h2V26A2.0027,2.0027,0,0,1,26,28Z"></path><path d="M20 2 20 4 26.586 4 18 12.586 19.414 14 28 5.414 28 12 30 12 30 2 20 2z"></path></svg><!----> <span class="sr-only">(opens in a new tab)</span></a><!--]--> <!--[-1--><!--]--> <!--[-1--><!--]--></div></div><!--]--><!--]--></div></aside></div></main><!--]--><!--]--><!----> <!--[0--><!--[-1--><!--]--><!--]--><!--]--><!--]--> <!--[-1--><!--]--><!--]-->
+			
+			<script>
+				{
+					__sveltekit_1ndru53 = {
+						base: new URL("../..", location).pathname.slice(0, -1),
+						assets: "/saddle-ai-goap"
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("../../_app/immutable/entry/start.DDQ7g6Cb.js"),
+						import("../../_app/immutable/entry/app.BzKhkPjR.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 2, 5],
+							data: [null,null,{type:"data",data:{html:"\u003Cp>\u003Ccode>saddle-ai-goap\u003C/code> plans over symbolic facts, not raw ECS snapshots.\u003C/p>\n\u003Ch2>World-State Model\u003C/h2>\n\u003Cp>The planner-visible state lives in \u003Ccode>GoapWorldState\u003C/code> and is keyed by \u003Ccode>WorldKeyId\u003C/code> entries from \u003Ccode>WorldStateSchema\u003C/code>.\u003C/p>\n\u003Cp>Supported first-class value types:\u003C/p>\n\u003Cul>\n\u003Cli>\u003Ccode>Bool\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>Int\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>Target\u003C/code>\u003C/li>\n\u003C/ul>\n\u003Cp>Why no built-in float or position facts in v1:\u003C/p>\n\u003Cul>\n\u003Cli>planner-visible state should stay compact and deterministic\u003C/li>\n\u003Cli>float-heavy symbolic states are awkward to hash and compare\u003C/li>\n\u003Cli>most spatial reasoning is better modeled as target selection plus context validation\u003C/li>\n\u003C/ul>\n\u003Cp>If a domain needs location-aware planning, prefer:\u003C/p>\n\u003Cul>\n\u003Cli>target providers returning \u003Ccode>TargetCandidate\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>TargetCandidate::debug_position\u003C/code> for overlays and tooling\u003C/li>\n\u003Cli>context validators or dynamic cost hooks for reachability, reservation, or travel heuristics\u003C/li>\n\u003C/ul>\n\u003Ch2>Facts\u003C/h2>\n\u003Ch3>\u003Ccode>FactCondition\u003C/code>\u003C/h3>\n\u003Cp>Supported comparisons:\u003C/p>\n\u003Cul>\n\u003Cli>equality / inequality\u003C/li>\n\u003Cli>integer \u003Ccode>&gt;=\u003C/code>\u003C/li>\n\u003Cli>integer \u003Ccode>&lt;=\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>IsSet\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>IsUnset\u003C/code>\u003C/li>\n\u003C/ul>\n\u003Ch3>\u003Ccode>FactEffect\u003C/code>\u003C/h3>\n\u003Cp>Supported symbolic effects:\u003C/p>\n\u003Cul>\n\u003Cli>set a fact\u003C/li>\n\u003Cli>add to an integer fact\u003C/li>\n\u003Cli>clear a fact\u003C/li>\n\u003C/ul>\n\u003Ch3>\u003Ccode>FactPatch\u003C/code>\u003C/h3>\n\u003Cp>Sensors emit \u003Ccode>FactPatch\u003C/code> values to update symbolic memory.\u003C/p>\n\u003Ch2>Goals\u003C/h2>\n\u003Cp>Goals describe desired outcomes, not scripts.\u003C/p>\n\u003Cp>Each \u003Ccode>GoalDefinition\u003C/code> contains:\u003C/p>\n\u003Cul>\n\u003Cli>\u003Ccode>desired_state\u003C/code>\u003C/li>\n\u003Cli>fixed \u003Ccode>priority\u003C/code>\u003C/li>\n\u003Cli>optional dynamic \u003Ccode>relevance\u003C/code>\u003C/li>\n\u003Cli>optional \u003Ccode>validator\u003C/code>\u003C/li>\n\u003Cli>optional \u003Ccode>completion\u003C/code>\u003C/li>\n\u003C/ul>\n\u003Cp>Selection model:\u003C/p>\n\u003Col>\n\u003Cli>reject invalid goals\u003C/li>\n\u003Cli>ignore already-complete goals\u003C/li>\n\u003Cli>compute \u003Ccode>priority + dynamic relevance\u003C/code>\u003C/li>\n\u003Cli>pick the highest score\u003C/li>\n\u003Cli>if \u003Ccode>preempt_on_better_goal\u003C/code> is enabled, switch only when the new goal beats the current one by \u003Ccode>goal_switch_margin\u003C/code>\u003C/li>\n\u003C/ol>\n\u003Ch2>Actions\u003C/h2>\n\u003Cp>Actions are symbolic planning units, not full gameplay stacks.\u003C/p>\n\u003Cp>Each \u003Ccode>ActionDefinition\u003C/code> contains:\u003C/p>\n\u003Cul>\n\u003Cli>symbolic \u003Ccode>preconditions\u003C/code>\u003C/li>\n\u003Cli>symbolic \u003Ccode>effects\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>base_cost\u003C/code>\u003C/li>\n\u003Cli>optional \u003Ccode>dynamic_cost\u003C/code>\u003C/li>\n\u003Cli>optional \u003Ccode>context_validator\u003C/code>\u003C/li>\n\u003Cli>optional target specification\u003C/li>\n\u003Cli>stable \u003Ccode>executor\u003C/code> key\u003C/li>\n\u003Cli>\u003Ccode>interruptible\u003C/code> flag (default \u003Ccode>true\u003C/code>)\u003C/li>\n\u003C/ul>\n\u003Cp>The planner reasons about the metadata above. The game owns the real execution that satisfies the action.\u003C/p>\n\u003Ch2>Target-Aware Actions\u003C/h2>\n\u003Cp>Target-aware actions use:\u003C/p>\n\u003Cul>\n\u003Cli>\u003Ccode>ActionTargetSpec\u003C/code>\nsymbolic slot name plus provider key\u003C/li>\n\u003Cli>\u003Ccode>TargetProviderContext\u003C/code>\nentity, domain, goal, current symbolic state, and action definition\u003C/li>\n\u003Cli>\u003Ccode>TargetCandidate\u003C/code>\nstable token, label, optional debug position, and optional cost bias\u003C/li>\n\u003C/ul>\n\u003Cp>Planning flow:\u003C/p>\n\u003Col>\n\u003Cli>target provider returns candidates\u003C/li>\n\u003Cli>each candidate becomes a \u003Ccode>PreparedActionVariant\u003C/code>\u003C/li>\n\u003Cli>optional context validation filters candidates\u003C/li>\n\u003Cli>optional dynamic cost hook adjusts each candidate\u003C/li>\n\u003Cli>the cheapest valid target-bound plan wins\u003C/li>\n\u003C/ol>\n\u003Cp>This is what lets one symbolic action represent &quot;use workstation A&quot; and &quot;use workstation B&quot; without making the planner blind to which target it actually chose.\u003C/p>\n\u003Ch2>Sensors\u003C/h2>\n\u003Cp>Sensors are the boundary between rich ECS data and symbolic memory.\u003C/p>\n\u003Ch3>Local sensors\u003C/h3>\n\u003Cul>\n\u003Cli>run per agent\u003C/li>\n\u003Cli>update agent-specific facts such as inventory, threat, or local cooldowns\u003C/li>\n\u003C/ul>\n\u003Ch3>Global sensors\u003C/h3>\n\u003Cul>\n\u003Cli>run per domain\u003C/li>\n\u003Cli>update shared facts or expensive cached data once for many agents\u003C/li>\n\u003C/ul>\n\u003Cp>Both sensor kinds:\u003C/p>\n\u003Cul>\n\u003Cli>support polling intervals\u003C/li>\n\u003Cli>support explicit invalidation via messages\u003C/li>\n\u003Cli>update runtime bookkeeping so BRP and overlays can inspect last run time, next due time, and notes\u003C/li>\n\u003C/ul>\n\u003Ch2>Plan Search\u003C/h2>\n\u003Cp>The planner performs forward A* over symbolic states.\u003C/p>\n\u003Cp>Heuristic (h_max):\u003C/p>\n\u003Cul>\n\u003Cli>for each unsatisfied goal condition, look up the minimum cost among actions whose effects can satisfy it (precomputed in \u003Ccode>ActionRelevanceMap\u003C/code>)\u003C/li>\n\u003Cli>return the maximum of those per-condition costs\u003C/li>\n\u003Cli>admissible: never overestimates, since even an action satisfying multiple conditions still costs at least \u003Ccode>max(min_cost_i)\u003C/code>\u003C/li>\n\u003C/ul>\n\u003Cp>Tie-breaking:\u003C/p>\n\u003Cul>\n\u003Cli>lower total estimated cost first\u003C/li>\n\u003Cli>then lower path cost\u003C/li>\n\u003Cli>then shallower depth\u003C/li>\n\u003Cli>then action declaration order / target candidate order\u003C/li>\n\u003Cli>then insertion order\u003C/li>\n\u003C/ul>\n\u003Cp>That ordering keeps results deterministic for the same inputs.\u003C/p>\n\u003Ch2>Replanning Policy\u003C/h2>\n\u003Cp>The runtime distinguishes several invalidation paths:\u003C/p>\n\u003Cul>\n\u003Cli>\u003Ccode>RequiredFactChanged\u003C/code>\nremaining step precondition no longer matches\u003C/li>\n\u003Cli>\u003Ccode>TargetInvalidated\u003C/code>\nchosen target vanished or no longer passes context validation\u003C/li>\n\u003Cli>\u003Ccode>ActionFailed\u003C/code>\nexecution reported failure\u003C/li>\n\u003Cli>\u003Ccode>HigherPriorityGoal\u003C/code>\ngoal selection chose a better goal\u003C/li>\n\u003Cli>\u003Ccode>SensorRefresh\u003C/code>\na newer sensor revision made the current plan or in-flight planning session stale and the agent is configured to react to that\u003C/li>\n\u003Cli>\u003Ccode>GoalNoLongerValid\u003C/code>\ngoal validator failed\u003C/li>\n\u003Cli>\u003Ccode>GoalCompleted\u003C/code>\ngoal finished\u003C/li>\n\u003Cli>\u003Ccode>Manual\u003C/code>\nexternal system explicitly invalidated the planner\u003C/li>\n\u003C/ul>\n\u003Cp>Default execution policy:\u003C/p>\n\u003Cul>\n\u003Cli>keep the current action alive while it is \u003Ccode>Running\u003C/code> or \u003Ccode>Waiting\u003C/code>\u003C/li>\n\u003Cli>invalidate immediately if the action&#39;s current target disappears\u003C/li>\n\u003Cli>invalidate immediately if the current step&#39;s required facts stop matching\u003C/li>\n\u003Cli>between actions, optionally invalidate on \u003Ccode>SensorRefresh\u003C/code>\u003C/li>\n\u003Cli>after \u003Ccode>PlanFailed\u003C/code>, hold that failure until the goal changes or sensors advance to a newer revision, instead of retrying the same impossible search every frame\u003C/li>\n\u003C/ul>\n\u003Ch2>Execution Handoff\u003C/h2>\n\u003Cp>Execution is message-driven.\u003C/p>\n\u003Cp>Planner to game:\u003C/p>\n\u003Cul>\n\u003Cli>\u003Ccode>ActionDispatched\u003C/code>\u003C/li>\n\u003C/ul>\n\u003Cp>Game to planner:\u003C/p>\n\u003Cul>\n\u003Cli>\u003Ccode>ActionExecutionReport::Running\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>ActionExecutionReport::Waiting\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>ActionExecutionReport::Success\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>ActionExecutionReport::Failure\u003C/code>\u003C/li>\n\u003Cli>\u003Ccode>ActionExecutionReport::Cancelled\u003C/code>\u003C/li>\n\u003C/ul>\n\u003Cp>That boundary keeps the crate generic. A game can resolve an action through movement code, animation code, network RPCs, or a custom worker system without changing the planner.\u003C/p>\n\u003Ch2>World-State Hashing\u003C/h2>\n\u003Cp>\u003Ccode>GoapWorldState\u003C/code> maintains an incrementally-updated Zobrist hash. Each \u003Ccode>set_raw\u003C/code>, \u003Ccode>clear\u003C/code>, \u003Ccode>ensure_len\u003C/code>, and \u003Ccode>overlay\u003C/code> mutation XORs out the old slot hash and XORs in the new one. The \u003Ccode>Hash\u003C/code> trait uses the cached \u003Ccode>u64\u003C/code> directly, and \u003Ccode>PartialEq\u003C/code> fast-rejects on hash mismatch before comparing elements. This reduces per-node HashMap operations in the planner from O(keys) to O(1) average.\u003C/p>\n\u003Ch2>Target Reservations in Planning\u003C/h2>\n\u003Cp>When \u003Ccode>GoapDomainDefinition.reservation_policy\u003C/code> is set, the planning problem construction phase checks each target candidate against \u003Ccode>GoapReservationMap\u003C/code>. Targets reserved by other agents receive \u003Ccode>cost_penalty\u003C/code> additional cost (or are skipped with \u003Ccode>hard_block: true\u003C/code>). This steers the planner toward unreserved targets without hard-gating the ECS. Reservations are acquired on plan acceptance and released on plan invalidation or completion.\u003C/p>\n",title:"Planning Model",description:"Planning Model documentation",rawMarkdown:"`saddle-ai-goap` plans over symbolic facts, not raw ECS snapshots.\n\n## World-State Model\n\nThe planner-visible state lives in `GoapWorldState` and is keyed by `WorldKeyId` entries from `WorldStateSchema`.\n\nSupported first-class value types:\n\n- `Bool`\n- `Int`\n- `Target`\n\nWhy no built-in float or position facts in v1:\n\n- planner-visible state should stay compact and deterministic\n- float-heavy symbolic states are awkward to hash and compare\n- most spatial reasoning is better modeled as target selection plus context validation\n\nIf a domain needs location-aware planning, prefer:\n\n- target providers returning `TargetCandidate`\n- `TargetCandidate::debug_position` for overlays and tooling\n- context validators or dynamic cost hooks for reachability, reservation, or travel heuristics\n\n## Facts\n\n### `FactCondition`\n\nSupported comparisons:\n\n- equality / inequality\n- integer `>=`\n- integer `\u003C=`\n- `IsSet`\n- `IsUnset`\n\n### `FactEffect`\n\nSupported symbolic effects:\n\n- set a fact\n- add to an integer fact\n- clear a fact\n\n### `FactPatch`\n\nSensors emit `FactPatch` values to update symbolic memory.\n\n## Goals\n\nGoals describe desired outcomes, not scripts.\n\nEach `GoalDefinition` contains:\n\n- `desired_state`\n- fixed `priority`\n- optional dynamic `relevance`\n- optional `validator`\n- optional `completion`\n\nSelection model:\n\n1. reject invalid goals\n2. ignore already-complete goals\n3. compute `priority + dynamic relevance`\n4. pick the highest score\n5. if `preempt_on_better_goal` is enabled, switch only when the new goal beats the current one by `goal_switch_margin`\n\n## Actions\n\nActions are symbolic planning units, not full gameplay stacks.\n\nEach `ActionDefinition` contains:\n\n- symbolic `preconditions`\n- symbolic `effects`\n- `base_cost`\n- optional `dynamic_cost`\n- optional `context_validator`\n- optional target specification\n- stable `executor` key\n- `interruptible` flag (default `true`)\n\nThe planner reasons about the metadata above. The game owns the real execution that satisfies the action.\n\n## Target-Aware Actions\n\nTarget-aware actions use:\n\n- `ActionTargetSpec`\n  symbolic slot name plus provider key\n- `TargetProviderContext`\n  entity, domain, goal, current symbolic state, and action definition\n- `TargetCandidate`\n  stable token, label, optional debug position, and optional cost bias\n\nPlanning flow:\n\n1. target provider returns candidates\n2. each candidate becomes a `PreparedActionVariant`\n3. optional context validation filters candidates\n4. optional dynamic cost hook adjusts each candidate\n5. the cheapest valid target-bound plan wins\n\nThis is what lets one symbolic action represent \"use workstation A\" and \"use workstation B\" without making the planner blind to which target it actually chose.\n\n## Sensors\n\nSensors are the boundary between rich ECS data and symbolic memory.\n\n### Local sensors\n\n- run per agent\n- update agent-specific facts such as inventory, threat, or local cooldowns\n\n### Global sensors\n\n- run per domain\n- update shared facts or expensive cached data once for many agents\n\nBoth sensor kinds:\n\n- support polling intervals\n- support explicit invalidation via messages\n- update runtime bookkeeping so BRP and overlays can inspect last run time, next due time, and notes\n\n## Plan Search\n\nThe planner performs forward A* over symbolic states.\n\nHeuristic (h_max):\n\n- for each unsatisfied goal condition, look up the minimum cost among actions whose effects can satisfy it (precomputed in `ActionRelevanceMap`)\n- return the maximum of those per-condition costs\n- admissible: never overestimates, since even an action satisfying multiple conditions still costs at least `max(min_cost_i)`\n\nTie-breaking:\n\n- lower total estimated cost first\n- then lower path cost\n- then shallower depth\n- then action declaration order / target candidate order\n- then insertion order\n\nThat ordering keeps results deterministic for the same inputs.\n\n## Replanning Policy\n\nThe runtime distinguishes several invalidation paths:\n\n- `RequiredFactChanged`\n  remaining step precondition no longer matches\n- `TargetInvalidated`\n  chosen target vanished or no longer passes context validation\n- `ActionFailed`\n  execution reported failure\n- `HigherPriorityGoal`\n  goal selection chose a better goal\n- `SensorRefresh`\n  a newer sensor revision made the current plan or in-flight planning session stale and the agent is configured to react to that\n- `GoalNoLongerValid`\n  goal validator failed\n- `GoalCompleted`\n  goal finished\n- `Manual`\n  external system explicitly invalidated the planner\n\nDefault execution policy:\n\n- keep the current action alive while it is `Running` or `Waiting`\n- invalidate immediately if the action's current target disappears\n- invalidate immediately if the current step's required facts stop matching\n- between actions, optionally invalidate on `SensorRefresh`\n- after `PlanFailed`, hold that failure until the goal changes or sensors advance to a newer revision, instead of retrying the same impossible search every frame\n\n## Execution Handoff\n\nExecution is message-driven.\n\nPlanner to game:\n\n- `ActionDispatched`\n\nGame to planner:\n\n- `ActionExecutionReport::Running`\n- `ActionExecutionReport::Waiting`\n- `ActionExecutionReport::Success`\n- `ActionExecutionReport::Failure`\n- `ActionExecutionReport::Cancelled`\n\nThat boundary keeps the crate generic. A game can resolve an action through movement code, animation code, network RPCs, or a custom worker system without changing the planner.\n\n## World-State Hashing\n\n`GoapWorldState` maintains an incrementally-updated Zobrist hash. Each `set_raw`, `clear`, `ensure_len`, and `overlay` mutation XORs out the old slot hash and XORs in the new one. The `Hash` trait uses the cached `u64` directly, and `PartialEq` fast-rejects on hash mismatch before comparing elements. This reduces per-node HashMap operations in the planner from O(keys) to O(1) average.\n\n## Target Reservations in Planning\n\nWhen `GoapDomainDefinition.reservation_policy` is set, the planning problem construction phase checks each target candidate against `GoapReservationMap`. Targets reserved by other agents receive `cost_penalty` additional cost (or are skipped with `hard_block: true`). This steers the planner toward unreserved targets without hard-gating the ECS. Reservations are acquired on plan acceptance and released on plan invalidation or completion.\n",slug:"planning-model"},uses:{params:["slug"]}}],
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>
